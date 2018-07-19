@@ -4,7 +4,7 @@
 
 // 域名
 // let host = 'https://erp.fdtx.cn';
-let host = 'http://211.155.225.25/CEPMTEST'
+let host = 'https://erp.fdtx.cn/CEPMTEST'
 
 // 下面的地址配合云端 Demo 工作
 export const service = {

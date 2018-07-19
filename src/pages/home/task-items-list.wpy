@@ -1,33 +1,56 @@
 <template>
-  <view class="page__bd bg__white">
-    <view class="weui-flex flex-align-center bg__search">
-      <view class="color-blue searchbar-text" wx:if="{{taskType == 0}}">
-        <navigator class="all-read" url="/pages/other/op-type-list?id={{siteID}}" hover-class="navigator-hover">
-          <block wx:if="{{opType2Name}}">{{opType2Name}}</block>
-          <block wx:else>任务筛选</block>
-        </navigator>
-      </view>
-      <view class="weui-flex__item">
-        <SearchBar :placeholder="placeholder" @childFn.user="parentSearch"></SearchBar>
-      </view>
+<view class="page__bd bg__white">
+  <view class="weui-flex flex-align-center bg__search">
+    <view class="color-blue searchbar-text" wx:if="{{taskType == 0}}">
+      <navigator class="all-read" url="/pages/other/op-type-list?id={{siteID}}" hover-class="navigator-hover">
+        <block wx:if="{{opType2Name}}">{{opType2Name}}</block>
+        <block wx:else>任务筛选</block>
+      </navigator>
     </view>
-    <!-- <button type="primary" bindtap="getRegion">获取范围</button> -->
-    <map id="map" style="height:{{height}}px;" longitude="{{longitude}}" latitude="{{latitude}}" markers="{{markers}}" bindmarkertap="markertap" scale="14" show-location>
-      <cover-image bindtap="location" class="location" src="/images/icons/location.png" />
-      <cover-view class="weui-dialog">
-        <cover-view class="weui-dialog__hd">
-          <cover-view class="weui-dialog__title">任务详情</cover-view>
-        </cover-view>
-        <!-- <cover-view class="weui-dialog__bd">
-              <cover-view class="weui-dialog__text">任务类型：{{markerItem.name}}</cover-view>
-              <cover-view class="weui-dialog__text">站点名称：{{markerItem.siteName}}</cover-view>
-              <cover-view class="weui-dialog__text">巡检责任人：{{markerItem.userName}}</cover-view>
-              <cover-view class="weui-dialog__text">要求日期：{{markerItem.planFinishDate}}</cover-view>
-            </cover-view> -->
-      </cover-view>
-    </map>
+    <view class="weui-flex__item">
+      <SearchBar :placeholder="placeholder" @childFn.user="parentSearch"></SearchBar>
+    </view>
+  </view>
+  <!-- <button type="primary" bindtap="getRegion">获取范围</button> -->
+  <map id="map" style="height:{{height}}px;" longitude="{{longitude}}" latitude="{{latitude}}" markers="{{markers}}" bindmarkertap="markertap" scale="14" show-location>
+        <cover-image bindtap="location" class="location" src="/images/icons/location.png" />
+          <cover-view  hidden="{{hidden}}" class="layer" bindtap="removeLayer"></cover-view>
+          <cover-view hidden="{{hidden}}" class="weui-dialog">
+            <block wx:if="{{taskType == 0}}">
+                <cover-view class="weui-dialog__hd">
+                  <cover-view class="weui-dialog__title">任务详情</cover-view>
+                </cover-view>
+                <cover-view class="weui-dialog__bd">
+                  <cover-view class="weui-dialog__text">任务类型：{{markerItem.name}}</cover-view>
+                  <cover-view class="weui-dialog__text">站点名称：{{markerItem.siteName}}</cover-view>
+                  <cover-view class="weui-dialog__text">巡检责任人：{{markerItem.userName}}</cover-view>
+                  <cover-view class="weui-dialog__text">要求日期：{{markerItem.planFinishDate}}</cover-view>
+                </cover-view>
+                <cover-view class="weui-dialog__ft weui-flex">
+                  <cover-view class="weui-flex__item mini-btn" type="primary" size="mini" data-id="{{markerItem.id}}" data-type="0" @tap="dealWith">处理</cover-view>
+                  <cover-view class="weui-flex__item mini-btn" type="warn" size="mini" @tap="removeLayer">取消</cover-view>
+                </cover-view>
+            </block>
+            <block wx:else>
+                <cover-view class="weui-dialog__hd">
+                  <cover-view class="weui-dialog__title">标记详情</cover-view>
+                </cover-view>
+                <cover-view class="weui-dialog__bd">
+                  <cover-view class="weui-dialog__text">站点名称：{{markerItem.siteName }}</cover-view>
+                  <cover-view class="weui-dialog__text">标记人：{{markerItem.userName}}</cover-view>
+                  <cover-view class="weui-dialog__text">标记时间：{{markerItem.pubTime}}</cover-view>
+                  <cover-view class="weui-dialog__text">标记内容：{{markerItem.name}}</cover-view>
+                </cover-view>
+                <cover-view class="weui-dialog__ft weui-flex">
+                  <cover-view class="weui-flex__item mini-btn" type="primary" size="mini" data-id="{{markerItem.id}}" @tap="dealWith" data-type="2">转成日志</cover-view>
+                  <cover-view class="weui-flex__item mini-btn" type="default" size="mini" data-id="{{markerItem.id}}" @tap="shareMark">分享</cover-view>
+                  <cover-view class="weui-flex__item mini-btn" type="warn" size="mini" data-id="{{markerItem.id}}" @tap="deleteMark">删除</cover-view>
+                </cover-view>
+            </block>
+          </cover-view>
+  </map>
 
-    <!-- <cover-view hidden="{{hidden}}" catchtouchmove='preventTouchMove'>
+  <!-- <cover-view hidden="{{hidden}}" catchtouchmove='preventTouchMove'>
     <cover-view class="layer" catchtouchstart="removeLayer"></cover-view>
     <cover-view class="weui-dialog" wx:if="{{taskType == 0}}">
       <cover-view class="weui-dialog__hd">
@@ -44,7 +67,7 @@
         <cover-view class="weui-btn mini-btn" type="warn" size="mini" @tap="removeLayer">取消</cover-view>
       </cover-view>
     </cover-view>
-    <cover-view class="weui-dialog" wx:else="{{taskType == 0}}">
+    <cover-view class="weui-dialog" wx:else>
       <cover-view class="weui-dialog__hd">
         <cover-view class="weui-dialog__title">标记详情</cover-view>
       </cover-view>
@@ -61,13 +84,15 @@
       </cover-view>
     </cover-view>
   </cover-view> -->
-    <Tabbar></Tabbar>
-  </view>
+  <Tabbar></Tabbar>
+</view>
 </template>
 
 <script>
 import wepy from "wepy";
-import { service } from "../../config.js";
+import {
+  service
+} from "../../config.js";
 import base from "../../mixins/base";
 import http from "../../mixins/http";
 import location from "../../mixins/location";
@@ -108,12 +133,10 @@ export default class TaskItemsList extends wepy.page {
       const that = this;
       this.mapCtx.includePoints({
         padding: [10],
-        points: [
-          {
-            latitude: that.latitude,
-            longitude: that.longitude
-          }
-        ]
+        points: [{
+          latitude: that.latitude,
+          longitude: that.longitude
+        }]
       });
     },
     removeLayer() {
@@ -144,8 +167,7 @@ export default class TaskItemsList extends wepy.page {
           break;
       }
       wepy.navigateTo({
-        url:
-          url +
+        url: url +
           "?id=" +
           e.currentTarget.dataset.id +
           "&taskType=" +
@@ -185,30 +207,30 @@ export default class TaskItemsList extends wepy.page {
         content: "要删除该标记吗",
         success: function(res) {
           if (res.confirm) {
-            that.$post(
-              {
-                url: service.get_delete_MaintenanceSign,
-                data: {
-                  tkID: that.tkID,
-                  id: id,
-                  jyID: that.markjyID
-                }
-              },
-              {
-                success: ({ code, data }) => {
-                  wepy.showToast({
-                    title: "成功！",
-                    icon: "success",
-                    duration: 1000
-                  });
-                  setTimeout(function() {
-                    wepy.redirectTo({
-                      url: "./task-items-list?taskType=2"
-                    });
-                  }, 1000);
-                }
+            that.$post({
+              url: service.get_delete_MaintenanceSign,
+              data: {
+                tkID: that.tkID,
+                id: id,
+                jyID: that.markjyID
               }
-            );
+            }, {
+              success: ({
+                code,
+                data
+              }) => {
+                wepy.showToast({
+                  title: "成功！",
+                  icon: "success",
+                  duration: 1000
+                });
+                setTimeout(function() {
+                  wepy.redirectTo({
+                    url: "./task-items-list?taskType=2"
+                  });
+                }, 1000);
+              }
+            });
           } else if (res.cancel) {
             console.log("用户点击取消");
           }
@@ -226,77 +248,77 @@ export default class TaskItemsList extends wepy.page {
     if (!this.shareID) {
       return;
     } else {
-      this.$post(
-        {
-          url: service.get_share_Sign,
-          data: {
-            tkID: this.tkID,
-            id: this.shareID,
-            userIDS: ids
-          }
-        },
-        {
-          success: ({ code, data }) => {
-            wepy.showToast({
-              title: "成功！",
-              icon: "success",
-              duration: 1000
-            });
-            setTimeout(function() {
-              wepy.redirectTo({
-                url: "./task-items-list?taskType=2"
-              });
-            }, 1000);
-          }
+      this.$post({
+        url: service.get_share_Sign,
+        data: {
+          tkID: this.tkID,
+          id: this.shareID,
+          userIDS: ids
         }
-      );
+      }, {
+        success: ({
+          code,
+          data
+        }) => {
+          wepy.showToast({
+            title: "成功！",
+            icon: "success",
+            duration: 1000
+          });
+          setTimeout(function() {
+            wepy.redirectTo({
+              url: "./task-items-list?taskType=2"
+            });
+          }, 1000);
+        }
+      });
     }
   }
   getList() {
-    this.$post(
-      {
-        url: service.get_list_MaintenanceTask,
-        data: {
-          tkID: this.tkID,
-          latitudeBegin: this.latitudeBegin,
-          latitudeEnd: this.latitudeEnd,
-          longitudeBegin: this.longitudeBegin,
-          longitudeEnd: this.longitudeEnd,
-          taskType: this.taskType,
-          siteProperty: this.siteProperty,
-          taskName: this.taskName || ""
-        }
-      },
-      {
-        success: ({ code, data }) => {
-          this.markers = data.dataRows;
-          for (let index = 0; index < data.dataRows.length; index++) {
-            this.markers[index].iconPath =
-              "/images/map/" + this.markers[index].imagePath;
-            this.markers[index].width = 20;
-            this.markers[index].height = 20;
-          }
-          this.$apply();
-        }
+    this.$post({
+      url: service.get_list_MaintenanceTask,
+      data: {
+        tkID: this.tkID,
+        latitudeBegin: this.latitudeBegin,
+        latitudeEnd: this.latitudeEnd,
+        longitudeBegin: this.longitudeBegin,
+        longitudeEnd: this.longitudeEnd,
+        taskType: this.taskType,
+        siteProperty: this.siteProperty,
+        taskName: this.taskName || ""
       }
-    );
+    }, {
+      success: ({
+        code,
+        data
+      }) => {
+        this.markers = data.dataRows;
+        for (let index = 0; index < data.dataRows.length; index++) {
+          this.markers[index].iconPath =
+            "/images/map/" + this.markers[index].imagePath;
+          this.markers[index].width = 20;
+          this.markers[index].height = 20;
+        }
+        this.$apply();
+      }
+    });
   }
   getItems(id) {
-    this.$post(
-      {
-        url: service.get_view_MaintenanceTask,
-        data: {
-          tkID: this.tkID,
-          id: id,
-          taskType: 2
-        }
-      },
-      {
-        success: ({ code, data }) => {
-          this.markjyID = data.jyID;
-        }
+    this.$post({
+      url: service.get_view_MaintenanceTask,
+      data: {
+        tkID: this.tkID,
+        id: id,
+        taskType: 2
       }
-    );
+    }, {
+      success: ({
+        code,
+        data
+      }) => {
+        this.markjyID = data.jyID;
+      }
+    });
   }
   getRegion() {
     const that = this;
@@ -329,15 +351,15 @@ export default class TaskItemsList extends wepy.page {
       that.longitude = location.longitude;
       that.latitude = location.latitude;
 
-      // that.mapCtx = wepy.createMapContext("map", that)
-      // that.getRegion();
+      that.mapCtx = wepy.createMapContext("map", that)
+      setTimeout(function() {
+        that.getRegion();
+      }, 1000);
       that.$apply();
     });
     this.mapCtx = wepy.createMapContext("map", this);
     // this.getRegion();
-    setTimeout(function() {
-      that.getRegion();
-    }, 1000);
+
   }
   onLoad(options) {
     this.tkID = this.$parent.globalData.tkID;
@@ -411,8 +433,14 @@ export default class TaskItemsList extends wepy.page {
   line-height: 48px;
   font-size: 18px;
   text-align: center;
+  border-top: 2rpx solid #e2e2e2;
 }
 .mini-btn {
-  margin: 0 10rpx;
+  padding: 20rpx 0;
+  border: 2rpx solid #e2e2e2;
+  box-sizing: border-box;
+}
+.mini-btn:first-child {
+  border-left: none;
 }
 </style>
