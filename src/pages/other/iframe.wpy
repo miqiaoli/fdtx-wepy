@@ -1,0 +1,32 @@
+<template>
+<view class="item-wrapper">
+  <view wx:if="{{params}}"></view>
+  <web-view src="{{params}}"></web-view>
+</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import { service } from "../../config.js";
+
+export default class Iframe extends wepy.page {
+  config = {
+    navigationBarTitleText: '信息详情页'
+  }
+  data = {
+    tkID: '',
+    params: ''
+  }
+  onLoad(options) {
+    if (options.type === 'all') {
+      this.params = options.url
+    } else {
+      const str = options.url
+      const str1 = str.replace(/123abc/g, '=')
+      const str2 = str1.replace(/456def/g, '?')
+      const str3 = str2.replace(/789ghj/g, '&')
+      this.params = service.host + '/jsp/' + str3
+    }
+  }
+}
+</script>

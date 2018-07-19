@@ -1,0 +1,93 @@
+<template>
+<view class="weui-cells weui-cells_after-title text-center">
+  <image class='img' src='/images/logo.png'></image>
+  <view class='text'>{{items.userName}}</view>
+</view>
+<view class="weui-cells weui-cells_after-title">
+  <view class="weui-cell">
+    <view class="weui-cell__hd">账号名：</view>
+    <view class="weui-cell__bd">{{items.loginID}}</view>
+  </view>
+  <view class="weui-cell">
+    <view class="weui-cell__hd">部门名称：</view>
+    <view class="weui-cell__bd">{{items.deptName}}</view>
+  </view>
+  <view class="weui-cell">
+    <view class="weui-cell__hd">岗位名称：</view>
+    <view class="weui-cell__bd">{{items.roleName}}</view>
+  </view>
+  <view class="weui-cell" bindtap='makePhone' data-phone='{{items.mobile}}'>
+    <view class="weui-cell__hd">手机号码：</view>
+    <view class="weui-cell__bd color-blue">{{items.mobile}}</view>
+  </view>
+  <view class="weui-cell" bindtap='makePhone' data-phone='{{items.telephone}}'>
+    <view class="weui-cell__hd">办公电话：</view>
+    <view class="weui-cell__bd color-blue">{{items.telephone}}</view>
+  </view>
+  <view class="weui-cell">
+    <view class="weui-cell__hd">email：</view>
+    <view class="weui-cell__bd">{{items.email}}</view>
+  </view>
+</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import {service} from '../../config.js'
+import base from '../../mixins/base'
+import http from '../../mixins/http'
+
+export default class ContactsDetails extends wepy.page {
+  mixins = [base, http]
+  config = {
+    navigationBarTitleText: '通讯录'
+  }
+  data = {
+    tkID: '',
+    id: '',
+    items: {}
+  }
+  onLoad(options) {
+    this.tkID = this.$parent.globalData.tkID
+    this.id = options.id
+    this.getItems()
+  }
+  makePhone(e) {
+    if (e.currentTarget.dataset.phone === '') return
+    let phone = e.currentTarget.dataset.phone.split('/')
+    wepy.makePhoneCall({
+      phoneNumber: phone[0]
+    })
+  }
+  getItems() {
+    this.$post({
+      url: service.get_UserInfo,
+      data: {
+        tkID: this.tkID,
+        id: this.id
+      }
+    }, {
+      success: ({
+        code,
+        data
+      }) => {
+        this.items = data
+      }
+    })
+  }
+}
+</script>
+
+<style lang="css">
+.img {
+  width:120rpx;
+  height:120rpx;
+  margin-top: 30rpx;
+  border-radius:50%;
+}
+.text {
+  display: block;
+  font-size:120%;
+  padding: 20rpx 20rpx 60rpx;
+}
+</style>

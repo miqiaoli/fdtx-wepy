@@ -1,0 +1,83 @@
+<template>
+<view class="page__bd">
+  <view class="items">
+    <view class="item text-center" wx:for="{{list}}" wx:key="id">
+      <navigator url='./list?businessType={{item.businessType}}&title={{item.buttonTitle}}'>
+        <view class="buttom" style="background:{{item.buttonColor}}">{{item.buttonWord}}</view>
+        <view class="text">{{item.buttonName}}</view>
+      </navigator>
+    </view>
+  </view>
+</view>
+<Tabbar></Tabbar>
+</template>
+
+<script>
+import wepy from 'wepy'
+import {
+  service
+} from '../../config.js'
+import base from '../../mixins/base'
+import http from '../../mixins/http'
+import Tabbar from '../../components/tabbar'
+
+export default class QueryItems extends wepy.page {
+  mixins = [base, http]
+  config = {
+    navigationBarTitleText: '我的查询项'
+  }
+  data = {
+    tkID: '',
+    list: ''
+  }
+  components = {
+    Tabbar
+  }
+  getList() {
+    this.$post({
+      url: service.get_search_BusinessButton,
+      data: {
+        tkID: this.tkID
+      }
+    }, {
+      success: ({
+        code,
+        data
+      }) => {
+        this.list = data.dataRows
+      },
+      fail: ({
+        code,
+        data
+      }) => {}
+    })
+  }
+  onLoad() {
+    this.tkID = this.$parent.globalData.tkID
+    this.getList()
+  }
+}
+</script>
+
+<style lang="css">
+.item {
+  width: 25%;
+  padding: 40rpx 0;
+  display: inline-block;
+}
+.buttom {
+  width:100rpx;
+  height:100rpx;
+  line-height: 100rpx;
+  border-radius: 10rpx;
+  color: #fff;
+  text-align: center;
+  font-size: 56rpx;
+  font-weight: bold;
+  margin: auto;
+}
+.text {
+  font-size: 28rpx;
+  margin-top: 10rpx;
+}
+</style>

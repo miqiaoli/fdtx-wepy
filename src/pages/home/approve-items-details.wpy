@@ -1,0 +1,153 @@
+<template>
+<view class="page__bd">
+  <view class="weui-cells__title" wx:if="{{itemData.fileList}}">基本内容</view>
+  <view class="weui-cells weui-cells_after-title">
+    <view class="weui-cell">
+      <view class="weui-cell__hd">申请事由：</view>
+      <view class="weui-cell__bd">
+        <navigator url="/pages/other/iframe?url={{itemData.itemUrl}}">
+          {{itemData.Title}}
+        </navigator>
+      </view>
+    </view>
+    <view class="weui-cell">
+      <view class="weui-cell__hd">申请日期：</view>
+      <view class="weui-cell__bd">{{itemData.ApplyDate}}</view>
+    </view>
+    <view class="weui-cell">
+      <view class="weui-cell__hd">申请人：</view>
+      <view class="weui-cell__bd">{{itemData.ApplyerName}}</view>
+    </view>
+    <view class="weui-cell">
+      <view class="weui-cell__hd">审批类别：</view>
+      <view class="weui-cell__bd">{{itemData.BusinessTypeName}}</view>
+    </view>
+    <view class="weui-cell">
+      <view class="weui-cell__hd">推送时间：</view>
+      <view class="weui-cell__bd">{{itemData.ArriveTime}}</view>
+    </view>
+    <view class="weui-cell">
+      <view class="weui-cell__hd">审批人名称：</view>
+      <view class="weui-cell__bd">{{itemData.AuditerName}}</view>
+    </view>
+    <view class="weui-cell">
+      <view class="weui-cell__hd">审批环节：</view>
+      <view class="weui-cell__bd">{{itemData.OrderIndex}}</view>
+    </view>
+    <view class="weui-cell">
+      <view class="weui-cell__hd">审批权限：</view>
+      <view class="weui-cell__bd">{{itemData.PowerStatusName}}</view>
+    </view>
+    <view class="weui-cell">
+      <view class="weui-cell__hd">审批状态：</view>
+      <view class="weui-cell__bd">{{itemData.ActionStatusName}}</view>
+    </view>
+    <view class="weui-cell">
+      <view class="weui-cell__hd">审批日期：</view>
+      <view class="weui-cell__bd">{{itemData.CheckDate}}</view>
+    </view>
+  </view>
+  <view class="weui-cells__title" wx:if="{{itemData.fileList}}">附件列表</view>
+  <view class="weui-cells weui-cells_after-title" wx:for="{{itemData.fileList}}" wx:for-index="index" wx:key="id">
+    <view class="weui-cell">
+      <view class="weui-cell__bd" data-id="{{item.fileID}}" bindtap="openfile">{{item.fileName}}{{item.uploadTime}}</view>
+    </view>
+  </view>
+  <view class="page__bd_spacing" wx:if="{{itemData.isCheck==0}}">
+    <button class="weui-btn" type="primary" bindtap="btnSubmit" data-code="1" data-id="{{workFlowNodeID}}">通过</button>
+    <button class="weui-btn" type="default" bindtap="btnSubmit" data-code="0" data-id="{{workFlowNodeID}}">不通过</button>
+  </view>
+</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import {
+  service
+} from '../../config.js'
+import base from '../../mixins/base'
+import http from '../../mixins/http'
+
+export default class approveItemsDetails extends wepy.page {
+  mixins = [base, http]
+  config = {
+    navigationBarTitleText: '我的审批项'
+  }
+  data = {
+    tkID: '',
+    mailReceiveID: '',
+    mailID: '',
+    itemData: {}
+  }
+  methods = {
+    openfile(e) {
+      wepy.showLoading({
+        title: '加载中'
+      })
+      this.$post({
+        url: service.get_view_file,
+        data: {
+          tkID: this.tkID,
+          id: e.currentTarget.dataset.id
+        }
+      }, {
+        success: ({
+          code,
+          data
+        }) => {
+          wepy.downloadFile({
+            url: service.host + '/' + data.itemUrl,
+            success: function(res) {
+              var filePath = res.tempFilePath
+              setTimeout(() => wepy.openDocument({
+                filePath: filePath,
+                success: function(res) {
+                  wepy.hideLoading()
+                  console.log('打开文档成功')
+                  console.log(res)
+                }
+              }), 1000)
+            },
+            complete: function() {
+              wepy.hideLoading()
+            }
+          })
+        }
+      })
+    },
+    btnSubmit(e) {
+      wepy.navigateTo({
+        url: 'test?id=1'
+      })
+    }
+  }
+  getItems() {
+    this.$post({
+      url: service.get_info_viewSinoCheck,
+      data: {
+        tkID: this.tkID,
+        workFlowNodeID: this.workFlowNodeID
+      }
+    }, {
+      success: ({
+        code,
+        data
+      }) => {
+        this.itemData = data
+        this.$apply()
+      }
+    })
+  }
+  onLoad(options) {
+    this.tkID = this.$parent.globalData.tkID
+    this.workFlowNodeID = options.workFlowNodeID
+    this.getItems()
+  }
+}
+</script>
+
+<style lang="css">
+.weui-cell__hd {
+  align-self: flex-start;
+}
+</style>

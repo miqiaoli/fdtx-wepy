@@ -1,0 +1,47 @@
+<template>
+<view class="page__bd bg__white">
+  <view class="weui-cells weui-cells_after-title">
+    <radio-group @change="radioChange">
+      <label class="weui-cell weui-check__label" wx:for="{{list}}" wx:key="value">
+          <radio class="weui-check" value="{{item.carID+','+item.autoCode}}" checked="{{item.checked}}"/>
+          <view class="weui-cell__bd">{{item.autoCode}}</view>
+          <view class="weui-cell__ft weui-cell__ft_in-radio" wx:if="{{item.checked}}">
+              <icon class="weui-icon-radio" type="success_no_circle" size="16"></icon>
+          </view>
+      </label>
+    </radio-group>
+  </view>
+</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import base from '../../mixins/base'
+import events from '../../utils/event'
+
+export default class CarList extends wepy.page {
+  mixins = [base]
+  config = {
+    navigationBarTitleText: '车辆选择'
+  }
+  data = {
+    tkID: '',
+    siteName: '',
+    list: []
+  }
+  methods = {
+    radioChange(e) {
+      const radioChoose = e.detail.value.split(',')
+      events.emitEvents('getChooseCar', radioChoose[0], radioChoose[1])
+      wepy.navigateBack()
+    }
+  }
+  onLoad(options) {
+    this.tkID = this.$parent.globalData.tkID
+    this.list = JSON.parse(options.list)
+  }
+}
+</script>
+
+<style lang="css">
+</style>

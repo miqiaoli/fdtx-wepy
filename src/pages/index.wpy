@@ -1,0 +1,208 @@
+<template>
+  <view class="page-index page-home">
+    <view class="weui-panel weui-panel_access bg__white">
+      <view class="weui-media-box weui-media-box_appmsg" wx:for="{{list}}" wx:key="id" animation='{{item.wrapAnimation}}'>
+        <view class="weui-media-box__hd weui-media-box__hd_in-appmsg">
+          <image class='weui-media-box__thumb' wx:if="{{item.isInfo}}" src="/images/icons/icon-gg.png"></image>
+          <image class='weui-media-box__thumb' wx:else src="/images/icons/icon-gz.png"></image>
+        </view>
+        <view class="weui-media-box__bd weui-media-box__bd_in-appmsg">
+          <navigator url="/pages/other/iframe?url={{item.itemUrl}}" hover-class="weui-cell_active">
+            <view class="weui-media-box__title">{{item.title}}</view>
+          </navigator>
+          <view class="weui-media-box__info">
+            <navigator url="/pages/contacts/details?id={{item.senderID}}" hover-class="weui-cell_active">
+              <view class="weui-media-box__info__meta color-blue">{{item.senderName}}</view>
+            </navigator>
+            <view class="weui-media-box__info__meta {{item.senderName ? 'weui-media-box__info__meta_extra' : ''}}">{{item.subtitle}}</view>
+          </view>
+        </view>
+        <view class="weui-cell__ft" bindtap="operatBtn" data-info='{{item.isInfo}}' id='{{item.id}}'>
+          <image class='ft-image__thumb' src="/images/icons/operat.png"></image>
+        </view>
+      </view>
+    </view>
+    <Tab :tab.sync='tabs'></Tab>
+    <Tabbar></Tabbar>
+  </view>
+</template>
+
+<script>
+import wepy from "wepy";
+import { service } from "../config.js";
+import base from "../mixins/base";
+import http from "../mixins/http";
+import Tabbar from "../components/tabbar";
+import Tab from "../components/tab";
+
+export default class Index extends wepy.page {
+  mixins = [base, http];
+  config = {
+    navigationBarTitleText: "首页",
+    enablePullDownRefresh: true
+  };
+  data = {
+    tkID: "",
+    noMoreList: false,
+    loading: false,
+    list: [],
+    tabs: {},
+    page: 0,
+    size: 10
+  };
+  operatBtn(e) {
+    const info = e.currentTarget.dataset.info;
+    const id = e.currentTarget.id;
+    const operatList = info ? ["未读通知"] : ["取消关注"];
+    const that = this;
+    wepy.showActionSheet({
+      itemList: operatList,
+      success: function(res) {
+        if (!info) {
+          that.getFocus(id);
+        }
+      },
+      fail: function(res) {
+        console.log(res.errMsg);
+      }
+    });
+  }
+  getItemList() {
+    this.$post(
+      {
+        url: service.get_list_IndexPage,
+        data: {
+          tkID: this.tkID,
+          cruPage: this.page,
+          pageSize: this.size
+        }
+      },
+      {
+        success: ({ code, data }) => {
+          this.list = data.dataRows;
+        },
+        fail: ({ code, data }) => {}
+      }
+    );
+  }
+  getHintNumInfo() {
+    this.$post(
+      {
+        url: service.get_hint_num_info,
+        data: {
+          tkID: this.tkID
+        }
+      },
+      {
+        success: ({ code, data }) => {
+          this.tabs = data;
+          this.$apply();
+        },
+        fail: ({ code, data }) => {}
+      }
+    );
+  }
+  getFocus(id) {
+    wepy.showLoading({
+      title: "加载中"
+    });
+    this.$post(
+      {
+        url: service.get_focus_ForBusiness,
+        data: {
+          tkID: this.tkID,
+          id: id,
+          isSet: 0
+        }
+      },
+      {
+        success: ({ code, data }) => {
+          wepy.showToast({
+            title: "操作成功",
+            icon: "success"
+          });
+          this.deleteMsgItem(id);
+        }
+      }
+    );
+  }
+  deleteMsgItem(id) {
+    const index = this.getItemIndex(id, this.list);
+    let animation = wepy.createAnimation({
+      duration: 200
+    });
+    animation
+      .height(0)
+      .opacity(0)
+      .step();
+
+    this.list[index].wrapAnimation = animation.export();
+    this.$apply();
+
+    setTimeout(
+      function() {
+        this.list.splice(index, 1);
+        this.$apply();
+      }.bind(this),
+      200
+    );
+  }
+  onReady() {
+    let self = this;
+    if (this.$parent.globalData.tkID) {
+      this.tkID = this.$parent.globalData.tkID;
+      this.$apply();
+      this.getItemList();
+      this.getHintNumInfo();
+      return;
+    }
+    this.$parent.getUserInfo(function(tkID) {
+      if (tkID) {
+        self.tkID = tkID;
+      }
+      self.$apply();
+      self.getItemList();
+      self.getHintNumInfo();
+    });
+  }
+
+  onPullDownRefresh() {
+    this.initPageData();
+    wepy.stopPullDownRefresh()
+  }
+
+  onReachBottom() {}
+
+  // 初始化页面数据
+  initPageData() {
+    // 初始化参数
+    this.cruPage = 0;
+      this.getItemList();
+      this.getHintNumInfo();
+  }
+
+  methods = {};
+
+  components = {
+    Tabbar,
+    Tab
+  };
+}
+</script>
+
+<style lang="less">
+.page-index {
+  padding-bottom: 175px;
+}
+.weui-media-box__hd_in-appmsg {
+  width: 90rpx;
+  height: 90rpx;
+}
+.weui-cell__ft {
+  width: 50rpx;
+}
+.ft-image__thumb {
+  width: 30rpx;
+  height: 30rpx;
+}
+</style>

@@ -1,0 +1,190 @@
+<template>
+<view class="page__bd bg__white">
+  <view class="weui-flex flex-align-center bg__search">
+    <view class="color-blue searchbar-text">
+      <view class='all-read' bindtap='bindChange' data-id='0' wx:if='{{isCheck}}'>已审批</view>
+      <view class='all-read' bindtap='bindChange' data-id='1' wx:else>未审批</view>
+    </view>
+    <view class="weui-flex__item">
+      <SearchBar :placeholder="placeholder" @childFn.user="parentSearch"></SearchBar>
+    </view>
+  </view>
+  <block wx:if="{{list.length > 0}}">
+    <view class="weui-panel weui-panel-no-margin weui-panel_access bg__white">
+      <view class="weui-media-box weui-media-box_appmsg" wx:for="{{list}}" wx:key="id">
+        <view class="weui-media-box__bd weui-media-box__bd_in-appmsg">
+          <navigator url="/pages/other/iframe?url={{item.itemUrl}}" hover-class="weui-cell_active">
+            <view class="weui-media-box__title">{{item.Title}}</view>
+          </navigator>
+          <view class="weui-media-box__info">
+            <view class="weui-media-box__info__meta">{{item.BusinessTypeName}}</view>
+            <!-- <navigator url="/pages/contacts/details?id={{item.senderID}}" hover-class="weui-cell_active"> -->
+            <view class="weui-media-box__info__meta color-blue {{item.BusinessTypeName ? 'weui-media-box__info__meta_extra' : ''}}">{{item.ApplyerName}}</view>
+            <!-- </navigator> -->
+            <view class="weui-media-box__info__meta {{item.ApplyerName ? 'weui-media-box__info__meta_extra' : ''}}">{{item.ApplyDate}}</view>
+          </view>
+        </view>
+        <view class='weui-cell__ft' bindtap='operatBtn' data-id='{{item.id}}' data-isjk='{{item.isjk}}'>
+          <image class='ft-image__thumb' src="/images/icons/operat.png"></image>
+        </view>
+      </view>
+    </view>
+  </block>
+  <ListStates :loading.sync="loading" :noMore.sync="noMore" :noList.sync="noList"></ListStates>
+  <Tabbar></Tabbar>
+</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import {
+  service
+} from '../../config.js'
+import base from '../../mixins/base'
+import http from '../../mixins/http'
+import ListStates from '../../components/listStates'
+import SearchBar from '../../components/searchbar'
+import Tabbar from '../../components/tabbar'
+
+export default class ApproveItemsList extends wepy.page {
+  mixins = [base, http]
+  config = {
+    navigationBarTitleText: '我的审批项',
+    enablePullDownRefresh: true,
+    onReachBottomDistance: 100
+  }
+  data = {
+    tkID: '',
+    list: [],
+    noList: false,
+    noMore: false,
+    loading: true,
+    start: 1,
+    limit: 15,
+    placeholder: '搜索',
+    title: '',
+    isCheck: 0
+  }
+  components = {
+    ListStates,
+    SearchBar,
+    Tabbar
+  }
+  methods = {
+    bindChange(e) {
+      this.start = 1
+      this.isCheck = parseInt(e.currentTarget.dataset.id)
+      this.noMoreList = false
+      this.getList()
+      this.$apply()
+    },
+    parentSearch(title, evt) {
+      this.title = title
+      this.getList()
+    },
+    operatBtn(e) {
+      const id = e.currentTarget.dataset.id
+      const isjk = e.currentTarget.dataset.isjk
+      const operatList = (this.isCheck === 0) ? ['通过', '不通过'] : ['查看详情']
+      const that = this
+      wepy.showActionSheet({
+        itemList: operatList,
+        success: function(res) {
+          if (that.isCheck === 0) {
+            if (res.tapIndex === 0) {
+              wepy.navigateTo({
+                url: './approve-items-checked?resultCode=1&workFlowNodeID=' + id + '&isjk=' + isjk
+              })
+            } else {
+              wepy.navigateTo({
+                url: './approve-items-checked?resultCode=0&workFlowNodeID=' + id + '&isjk=' + isjk
+              })
+            }
+          } else {
+            wepy.navigateTo({
+              url: './approve-items-details?workFlowNodeID=' + id
+            })
+          }
+        },
+        fail: function(res) {
+          console.log(res.errMsg)
+        }
+      })
+    }
+  }
+  getList() {
+    if (this.start === 1) {
+      this.list = []
+    }
+    this.$post({
+      url: service.get_list_CheckWork,
+      data: {
+        tkID: this.tkID,
+        cruPage: this.start,
+        pageSize: this.limit,
+        isCheck: this.isCheck,
+        title: this.title
+      }
+    }, {
+      success: ({
+        code,
+        data
+      }) => {
+        if (data.dataRows.length === 0) {
+          this.noList = true
+        }
+        if (this.start === 1) {
+          this.list = data.dataRows
+          this.maxPage = Math.ceil(data.maxPage / this.limit)
+        } else {
+          this.list = [
+            ...this.list,
+            ...data.dataRows
+          ]
+        }
+        this.$apply()
+      },
+      complete: () => {
+        this.loading = false
+      }
+    })
+  }
+  onShow() {
+    this.getList()
+  }
+  onLoad() {
+    this.tkID = this.$parent.globalData.tkID
+    // this.getList()
+  }
+  onPullDownRefresh() {
+    this.start = 1
+    this.getList()
+    wepy.stopPullDownRefresh()
+  }
+  onReachBottom() {
+    if (this.start < this.maxPage) {
+      ++this.start
+      this.getList()
+    } else {
+      this.noMore = true
+    }
+    this.$apply()
+  }
+}
+</script>
+
+<style lang="css">
+.weui-cell__ft {
+    width: 50rpx;
+}
+.ft-image__thumb {
+    width: 30rpx;
+    height: 30rpx;
+}
+.weui-media-box__info__meta_extra {
+  padding-left: 10rpx;
+}
+.weui-media-box__info__meta {
+  padding-right: 10rpx;
+}
+</style>

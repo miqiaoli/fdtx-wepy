@@ -1,0 +1,298 @@
+<template>
+  <view class="page__bd">
+    <form bindsubmit="formSubmit">
+      <view class="weui-cells weui-cells_after-title">
+        <view class="weui-cell weui-cell_input">
+          <view class="weui-cell__hd">
+            <view class="weui-label">站点名称：</view>
+          </view>
+          <view class="weui-cell__bd">
+            <view class="weui-input">{{itemData.siteName}}</view>
+          </view>
+        </view>
+        <view class="weui-cell weui-cell_input">
+          <view class="weui-cell__hd">
+            <view class="weui-label">上报位置：</view>
+          </view>
+          <view class="weui-cell__bd">
+            <view class="weui-input">{{longitude}},{{latitude}}</view>
+          </view>
+        </view>
+        <view class="weui-cell weui-cell_input" wx:for="{{itemData.keyStrList}}" wx:key="id">
+          <view class="weui-cell__hd">
+            <view class="weui-label">{{item.keyStr}}：</view>
+          </view>
+          <view class="weui-cell__bd">
+            <input class="weui-input" name="keyStr{{index}}" type="number" placeholder="请输入" />
+          </view>
+        </view>
+        <view class="weui-cell weui-cell_input">
+          <view class="weui-cell__hd">
+            <view class="weui-label">抄送人员：</view>
+          </view>
+          <view class="weui-cell__bd">
+            <view class="weui-input">{{infoUserNames}}<block wx:if="{{infoUserLength>2}}">等用户</block></view>
+          </view>
+          <view class="weui-cell__ft" bindtap="addUser" data-type='1'>
+            <image class='ft-image__thumb' src="/images/icons/add.png"></image>
+          </view>
+        </view>
+      </view>
+      <view class="weui-cells__title">其他说明</view>
+      <view class="weui-cells weui-cells_after-title">
+        <view class="weui-cell">
+          <view class="weui-cell__bd">
+            <textarea class="weui-textarea" name="opOtherContent" placeholder="请输入正文内容" style="height: 3.3em" />
+          </view>
+        </view>
+      </view>
+      <view class="weui-cells">
+        <view class="weui-cell">
+          <view class="weui-cell__bd">
+            <view class="weui-uploader">
+              <view class="weui-uploader__hd">
+                <view class="weui-uploader__title">图片上传</view>
+                <!-- <view class="weui-uploader__info">{{files.length}}/2</view> -->
+              </view>
+              <view class="weui-uploader__bd">
+                <view class="weui-uploader__files" id="uploaderFiles">
+                  <block wx:for="{{files}}" wx:key="*this">
+                    <view class="weui-uploader__file">
+                      <image class="weui-uploader__img" catch:tap="previewImage" data-index="{{index}}" src="{{imgHost +'/'+ item.itemUrl}}" mode="aspectFill" />
+                      <image class="icon-delete" src="/images/icons/icon-delete.png" mode="aspectFill" catch:tap="deleteImage" data-id="{{item.fileID}}" data-index="{{index}}" />
+                    </view>
+                  </block>
+                </view>
+                <view class="weui-uploader__input-box">
+                  <view class="weui-uploader__input" @tap="chooseImage"></view>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+      <view class="page__bd_spacing">
+        <button class="weui-btn" type="primary" formType="submit">提交</button>
+        <button class="weui-btn" type="default" @tap="goBack">取消</button>
+      </view>
+    </form>
+  </view>
+</template>
+
+<script>
+import wepy from "wepy";
+import { service } from "../../config.js";
+import base from "../../mixins/base";
+import http from "../../mixins/http";
+import events from "../../utils/event";
+
+export default class EmailChecked extends wepy.page {
+  mixins = [base, http];
+  config = {
+    navigationBarTitleText: "我的任务项"
+  };
+  data = {
+    tkID: "",
+    imgHost: "",
+    id: "",
+    taskType: "",
+    itemData: {},
+    longitude: "",
+    latitude: "",
+    infoUserIDS: "",
+    infoUserNames: "",
+    files: [],
+    fileUrl: [],
+    infoUserLength: 0
+  };
+  methods = {
+    addUser(e) {
+      wepy.navigateTo({
+        url:
+          "/pages/contacts/checked?contactIds=" +
+          this.infoUserIDS +
+          "&contactNames=" +
+          this.infoUserNames
+      });
+    },
+    bindKeyInput: function(e) {
+      this.setData({
+        inputValue: e.detail.value
+      });
+    },
+    chooseImage(e) {
+      const that = this;
+      wepy.chooseImage({
+        sizeType: ["original", "compressed"], // 可以指定是原图还是压缩图，默认二者都有
+        sourceType: ["album", "camera"], // 可以指定来源是相册还是相机，默认二者都有
+        success: function(res) {
+          // 返回选定照片的本地文件路径列表，tempFilePath可以作为img标签的src属性显示图片
+          for (var i = 0; i < res.tempFilePaths.length; i++) {
+            that.uploadImage(res.tempFilePaths[i], i);
+          }
+        }
+      });
+    },
+    previewImage(e) {
+      const index = e.currentTarget.dataset.index;
+      wepy.previewImage({
+        current: this.fileUrl[index], // 当前显示图片的http链接
+        urls: this.fileUrl // 需要预览的图片http链接列表
+      });
+    },
+    deleteImage(e) {
+      const fileID = e.currentTarget.dataset.id;
+      const index = e.currentTarget.dataset.index;
+      this.$post(
+        {
+          url: service.get_file_delete,
+          data: {
+            tkID: this.tkID,
+            fileID: fileID
+          }
+        },
+        {
+          success: ({ code, data }) => {
+            this.files.splice(index, 1);
+            this.fileUrl.splice(index, 1);
+            this.$apply();
+          }
+        }
+      );
+    },
+    formSubmit(e) {
+      wepy.showLoading({
+        title: "上传中..."
+      });
+      const keyStrList = this.itemData.keyStrList;
+      const opContent = [];
+      for (var i = 0; i < keyStrList.length; i++) {
+        const str = "keyStr" + i;
+        opContent.push(keyStrList[i].keyStr + ":" + e.detail.value[str]);
+      }
+
+      console.log(opContent.join(","));
+      this.$post(
+        {
+          url: service.get_commit_MaintenanceTask,
+          data: {
+            tkID: this.tkID,
+            jyID: this.itemData.jyID,
+            isAdd: 0,
+            id: this.itemData.id,
+            taskType: this.taskType,
+            siteID: this.itemData.siteID,
+            siteName: this.itemData.siteName,
+            latitude: this.latitude,
+            longitude: this.longitude,
+            opOtherContent: e.detail.value.opOtherContent || "",
+            opContent: opContent.join(","),
+            infoUserIDS: this.infoUserIDS
+          }
+        },
+        {
+          success: ({ code, data }) => {
+            wepy.showToast({
+              title: "成功！",
+              icon: "success",
+              duration: 1000
+            });
+            setTimeout(function() {
+              wepy.redirectTo({
+                url: "../task-items-list"
+              });
+            }, 1000);
+          }
+        }
+      );
+    },
+    goBack() {
+      wepy.navigateBack();
+    }
+  };
+  uploadImage(filePath, i) {
+    wepy.showLoading({
+      title: "上传中..."
+    });
+    const that = this;
+    wepy.uploadFile({
+      url: service.get_file_upload,
+      filePath: filePath,
+      name: "file",
+      formData: {
+        tkID: this.tkID,
+        infoID: this.itemData.id,
+        infoType: "dw01"
+      },
+      success: function(res) {
+        const resJson = JSON.parse(res.data);
+        that.files = that.files.concat(resJson);
+        that.fileUrl = that.fileUrl.concat(
+          that.imgHost + "/" + resJson.itemUrl
+        );
+        that.$apply();
+        wepy.hideLoading();
+      }
+    });
+  }
+  getChooseUser(ids, names) {
+    this.infoUserIDS = ids;
+    this.infoUserNames = names;
+    this.infoUserLength = ids.split(',').filter(d => d).length
+  }
+  getItems() {
+    this.$post(
+      {
+        url: service.get_view_MaintenanceTask,
+        data: {
+          tkID: this.tkID,
+          id: this.id,
+          taskType: this.taskType
+        }
+      },
+      {
+        success: ({ code, data }) => {
+          this.itemData = data;
+          this.$apply();
+        }
+      }
+    );
+  }
+  onLoad(options) {
+    this.imgHost = service.host;
+    this.tkID = this.$parent.globalData.tkID;
+    this.id = options.id || this.id;
+    this.taskType = options.taskType || this.taskType;
+    this.longitude = options.longitude || this.longitude;
+    this.latitude = options.latitude || this.latitude;
+    this.getItems();
+    events.addEvents("getChooseUser", this.getChooseUser, this);
+  }
+}
+</script>
+
+<style lang="css">
+.weui-btn {
+  margin-top: 40rpx;
+}
+.ft-image__thumb {
+  width: 44rpx;
+  height: 44rpx;
+}
+.weui-uploader__file {
+  position: relative;
+}
+.weui-uploader__file,
+.weui-uploader__input-box {
+  margin-top: 18rpx;
+  margin-bottom: 10rpx;
+}
+.icon-delete {
+  width: 40rpx;
+  height: 40rpx;
+  position: absolute;
+  top: -10rpx;
+  right: -10rpx;
+  z-index: 2;
+}
+</style>

@@ -1,0 +1,127 @@
+<template>
+<view class="tabbar bg__gray">
+  <view class="weui-grids">
+    <block wx:for="{{tabBar.list}}" wx:key="*this">
+      <block wx:if="{{item.special}}">
+        <navigator wx:if="{{item.selected}}" url="/pages/index" class="weui-grid" hover-class="weui-grid_active" open-type='reLaunch'>
+          <image class="weui-grid__icon weui-grid__icon-pub" src="{{item.selectedIconPath}}" />
+        </navigator>
+        <!-- <navigator wx:if="{{item.selected}}" url="/pages/index" class="weui-grid" hover-class="weui-grid_active" open-type='reLaunch'>
+          <image class="weui-grid__icon weui-grid__icon-pub" src="{{item.iconPath}}" />{{item.selected}}
+        </navigator> -->
+        <navigator wx:else url="{{item.pagePath}}" class="weui-grid" hover-class="weui-grid_active" open-type='reLaunch'>
+          <image class="weui-grid__icon weui-grid__icon-pub" src="{{item.iconPath}}" />
+        </navigator>
+      </block>
+      <navigator wx:else url="{{item.pagePath}}" open-type='reLaunch' class="weui-grid" hover-class="weui-grid_active">
+        <image class="weui-grid__icon" src="{{item.selected ? item.selectedIconPath : item.iconPath}}" />
+        <view class="weui-grid__label {{item.selected ? 'cur' : ''}}">{{item.text}}</view>
+      </navigator>
+    </block>
+  </view>
+</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+export default class Tabbar extends wepy.component {
+  data = {
+    tabBar: {
+      chooseId: 0,
+      color: '#AEADAD',
+      selectedColor: '#049BFF',
+      backgroundColor: '#fff',
+      borderStyle: 'black',
+      list: [{
+        pagePath: '/pages/index',
+        selectedIconPath: '/images/tabbars/icon_home_HL.png',
+        iconPath: '/images/tabbars/icon_home.png',
+        text: '首页',
+        selected: false,
+        special: false
+      }, {
+        pagePath: '/pages/chart/items',
+        selectedIconPath: '/images/tabbars/icon_chart_HL.png',
+        iconPath: '/images/tabbars/icon_chart.png',
+        text: '图表',
+        selected: false,
+        special: false
+      }, {
+        pagePath: '/pages/new/items',
+        selectedIconPath: '/images/tabbars/delete.png',
+        iconPath: '/images/tabbars/icon_add_HL.png',
+        selected: false,
+        special: true
+      }, {
+        pagePath: '/pages/query/items',
+        selectedIconPath: '/images/tabbars/icon_inquire_HL.png',
+        iconPath: '/images/tabbars/icon_inquire.png',
+        text: '查询',
+        selected: false,
+        special: false
+      }, {
+        pagePath: '/pages/mime',
+        selectedIconPath: '/images/tabbars/icon_mine_HL.png',
+        iconPath: '/images/tabbars/icon_mine.png',
+        text: '我的',
+        selected: false,
+        special: false
+      }]
+    }
+  }
+  editTabBar() {
+    let currentPages = this.getCurrentPages()
+    let _this = currentPages[currentPages.length - 1]
+    let pagePath = _this.__route__
+    let state = false;
+    (pagePath.indexOf('/') !== 0) && (pagePath = '/' + pagePath)
+    for (var i in this.tabBar.list) {
+      this.tabBar.list[i].selected = false
+      if (this.tabBar.list[i].pagePath === pagePath) {
+        this.tabBar.list[i].selected = true
+        state = true
+      }
+    }
+    console.log(this.tabBar.chooseId);
+    (!state) && (this.tabBar.list[this.tabBar.chooseId].selected = true)
+  }
+  onLoad() {
+    this.editTabBar()
+  }
+}
+</script>
+
+<style lang="css">
+.page__bd {
+  padding-bottom: 90rpx;
+}
+.tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+}
+.weui-grids {
+  border: none;
+}
+.weui-grid {
+  width: 20%;
+  padding: 0;
+  border: none;
+}
+.weui-grid__icon {
+  margin-top: 4rpx;
+}
+.weui-grid__label {
+  font-size: 24rpx;
+  line-height: 1;
+  margin-top: 6rpx;
+}
+.weui-grid__icon-pub {
+  width: 80rpx;
+  height: 80rpx;
+}
+.cur {
+  color: #09f;
+}
+</style>

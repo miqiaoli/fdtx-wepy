@@ -1,0 +1,85 @@
+<template>
+<view class="tab bg__white">
+  <view class="weui-grids new">
+    <navigator url="/pages/home/email-list" class="weui-grid weui-grid-pad-btm" hover-class="weui-grid_active">
+      <image class="weui-grid__icon" src="../images/tabbars/icon_yx.png" />
+      <view class="weui-badge" wx:if='{{tab.yjTNum}}'>{{tab.yjTNum}}</view>
+      <view class="weui-grid__label">邮箱</view>
+    </navigator>
+    <navigator url="/pages/home/notice-list" class="weui-grid weui-grid-pad-btm" hover-class="weui-grid_active">
+      <image class="weui-grid__icon" src="../images/tabbars/icon_yc.png" />
+      <view class="weui-badge" wx:if='{{tab.tzTNum}}'>{{tab.tzTNum}}</view>
+      <view class="weui-grid__label">通知</view>
+    </navigator>
+    <navigator url="/pages/home/agency-items-list" class="weui-grid weui-grid-pad-btm" hover-class="weui-grid_active">
+      <image class="weui-grid__icon" src="../images/tabbars/icon_db.png" />
+      <view class="weui-badge" wx:if='{{tab.dbTNum}}'>{{tab.dbTNum}}</view>
+      <view class="weui-grid__label">待办</view>
+    </navigator>
+    <navigator url="/pages/home/approve-items-list" class="weui-grid weui-grid-pad-btm" hover-class="weui-grid_active">
+      <image class="weui-grid__icon" src="../images/tabbars/icon_ds.png" />
+      <view class="weui-badge" wx:if='{{tab.dpTNum}}'>{{tab.dpTNum}}</view>
+      <view class="weui-grid__label">审批</view>
+    </navigator>
+    <navigator url="/pages/home/tracking-items-list" class="weui-grid weui-grid-pad-btm" hover-class="weui-grid_active">
+      <image class="weui-grid__icon" src="../images/tabbars/icon_gz.png" />
+      <view class="weui-badge" wx:if='{{tab.gzTNum}}'>{{tab.gzTNum}}</view>
+      <view class="weui-grid__label">跟踪</view>
+    </navigator>
+    <navigator url="/pages/home/task-items-list?taskType=0" class="weui-grid weui-grid-pad-btm" hover-class="weui-grid_active">
+      <image class="weui-grid__icon" src="../images/tabbars/icon_rw.png" />
+      <view class="weui-badge" wx:if='{{tab.rwTNum}}'>{{tab.rwTNum}}</view>
+      <view class="weui-grid__label">任务</view>
+    </navigator>
+    <navigator url="/pages/home/task-items-list?taskType=2" class="weui-grid weui-grid-pad-btm" hover-class="weui-grid_active">
+      <image class="weui-grid__icon" src="../images/tabbars/icon_bj.png" />
+      <view class="weui-badge" wx:if='{{tab.bjTNum}}'>{{tab.bjTNum}}</view>
+      <view class="weui-grid__label">标记</view>
+    </navigator>
+    <navigator url="/pages/home/site-items-list" class="weui-grid weui-grid-pad-btm" hover-class="weui-grid_active">
+      <image class="weui-grid__icon" src="../images/tabbars/icon_zd.png" />
+      <view class="weui-badge" wx:if='{{tab.zdTNum}}'>{{tab.zdTNum}}</view>
+      <view class="weui-grid__label">站点</view>
+    </navigator>
+  </view>
+</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+
+export default class Tab extends wepy.component {
+  props = {
+    tab: {
+      type: Object,
+      default: {}
+    }
+  }
+}
+</script>
+
+<style lang="css">
+.tab {
+  position: fixed;
+  bottom: 90rpx;
+  left: 0;
+  width: 100%;
+  /* padding-top: 10rpx; */
+  border-top:2rpx solid rgb(233, 233, 233);
+}
+.tab .weui-grid {
+  margin-top: 20rpx;
+}
+.weui-badge {
+  position: absolute;
+  top:-10rpx;
+  right:20rpx;
+}
+.weui-grid-pad-btm {
+  margin-bottom: 20rpx;
+}
+.new .weui-grid__icon {
+  width:70rpx;
+  height:70rpx;
+}
+</style>

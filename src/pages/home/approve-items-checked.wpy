@@ -1,0 +1,327 @@
+<template>
+  <view class="page__bd">
+    <form bindsubmit="formSubmit" bindreset="formReset">
+      <view class="weui-cells__title" wx:if="{{itemData.fileList}}">基本内容</view>
+      <view class="weui-cells weui-cells_after-title">
+        <view class="weui-cell">
+          <view class="weui-cell__hd">申请事由：</view>
+          <view class="weui-cell__bd">
+            <navigator url="/pages/other/iframe?url={{itemData.itemUrl}}">
+              {{itemData.ApplyReason}}
+            </navigator>
+          </view>
+        </view>
+        <view class="weui-cell">
+          <view class="weui-cell__hd">申请日期：</view>
+          <view class="weui-cell__bd">{{itemData.ApplyDate}}</view>
+        </view>
+        <view class="weui-cell">
+          <view class="weui-cell__hd">申请人：</view>
+          <view class="weui-cell__bd">{{itemData.ApplyerName}}</view>
+        </view>
+        <view class="weui-cell">
+          <view class="weui-cell__hd">审批人名称：</view>
+          <view class="weui-cell__bd">{{itemData.AuditerName}}</view>
+        </view>
+        <view class="weui-cell">
+          <view class="weui-cell__hd">审批日期：</view>
+          <view class="weui-cell__bd">{{itemData.CheckDate}}</view>
+        </view>
+      </view>
+      <block wx:if="{{resultCode==1}}">
+        <view class="weui-cells" wx:if='{{isjk == 1}}'>
+          <view class="weui-cell">
+            <view class="weui-cell__hd">申请借款金额：</view>
+            <view class="weui-cell__bd">{{itemData.loaninfo.sqjkje}}</view>
+          </view>
+          <view class="weui-cell">
+            <view class="weui-cell__hd">
+              <view class="weui-label">核定借款金额：</view>
+            </view>
+            <view class="weui-cell__bd">
+              <input class="weui-input" type="number" name="hdjkje" value='{{hdjkje}}' placeholder="必填" bindinput="bindKeyInput" data-type='hdjkje' />
+            </view>
+            <view class="weui-cell__ft">
+              <image class='ft-image__thumb' src="/images/icons/edit.png"></image>
+            </view>
+          </view>
+          <view class="weui-cell">
+            <view class="weui-cell__hd">
+              <view class="weui-label">借款利率(%)：</view>
+            </view>
+            <view class="weui-cell__bd">
+              <input class="weui-input" type="number" name="jkll" value='{{jkll}}' placeholder="必填" bindinput="bindKeyInput" data-type='jkll' />
+            </view>
+            <view class="weui-cell__ft">
+              <image class='ft-image__thumb' src="/images/icons/edit.png"></image>
+            </view>
+          </view>
+          <view class="weui-cell">
+            <view class="weui-cell__hd">
+              <view class="weui-label">逾期利率(%)：</view>
+            </view>
+            <view class="weui-cell__bd">
+              <input class="weui-input" type="number" name="yqll" value='{{yqll}}' placeholder="必填" bindinput="bindKeyInput" data-type='yqll' />
+            </view>
+            <view class="weui-cell__ft">
+              <image class='ft-image__thumb' src="/images/icons/edit.png"></image>
+            </view>
+          </view>
+          <view class="weui-cell">
+            <view class="weui-cell__hd">
+              <view class="weui-label">出借人：</view>
+            </view>
+            <view class="weui-cell__bd">
+              <picker bindchange="bindChange" value="{{pickerChoose}}" range="{{pickerArray}}" range-key="{{'loanUserName'}}">
+                <view class="picker">
+                  <text class="all-read">{{pickerArray[pickerChoose].loanUserName}}</text>
+                </view>
+              </picker>
+            </view>
+            <view class="weui-cell__ft weui-cell__ft_in-access"></view>
+          </view>
+        </view>
+        <block wx:if='{{itemData.nextWorkNodeList[0].roleId}}'>
+          <view class="weui-cells__title">下一环节处理人,选择当前处理人角色可用户：</view>
+          <block wx:for="{{itemData.nextWorkNodeList}}" wx:for-item="items" wx:for-index='i' wx:key="id">
+            <view class="weui-cells__title">{{items.roleName}}</view>
+            <view class="weui-cells weui-cells_after-title">
+              <radio-group @change="radioChange">
+                <label class="weui-cell weui-check__label" wx:for="{{items.roleUserList}}" wx:for-index='j' wx:key="id">
+                  <radio class="weui-check" value="{{i+','+items.roleId+','+item.roleUserID}}" checked="{{j==0}}" />
+                  <view class="weui-cell__bd">{{item.roleUserName}}</view>
+                </label>
+              </radio-group>
+            </view>
+          </block>
+        </block>
+        <block wx:else>
+          <block wx:if='{{itemData.nextWorkNodeList}}'>
+            <view class="weui-cells__title">终审环节,选择当前处理人角色可用户：</view>
+            <block wx:for="{{itemData.nextWorkNodeList}}" wx:for-item="items" wx:key="id">
+              <view class="weui-cells__title">处理人角色名称：{{items.roleName}}</view>
+              <view class="weui-cells weui-cells_after-title">
+                <radio-group @change="radioChange">
+                  <label class="weui-cell weui-check__label" wx:for="{{items.roleUserList}}" wx:for-index='j' wx:key="id">
+                    <radio class="weui-check" value="{{item.roleUserID}}" checked="{{j==0}}" />
+                    <view class="weui-cell__bd">{{item.roleUserName}}</view>
+                  </label>
+                </radio-group>
+              </view>
+            </block>
+          </block>
+        </block>
+      </block>
+      <view wx:else class="section">
+        <view class="weui-cells weui-cells_after-title">
+          <view class="weui-cell weui-cell_input">
+            <view class="weui-cell__bd">
+              <textarea class="weui-textarea" name="checkOpinion" value='{{checkOpinion}}' placeholder="请填写不通过的原因" style="height: 3.3em" />
+            </view>
+          </view>
+        </view>
+      </view>
+      <view class="page__bd_spacing button">
+        <button class="weui-btn" type="primary" formType="submit"> 确定 </button>
+        <button class="weui-btn" type="default" formType="reset"> 取消 </button>
+      </view>
+    </form>
+  </view>
+</template>
+
+<script>
+import wepy from "wepy";
+import { service } from "../../config.js";
+import base from "../../mixins/base";
+import http from "../../mixins/http";
+
+export default class approveItemsChecked extends wepy.page {
+  mixins = [base, http];
+  config = {
+    navigationBarTitleText: "我的审批项"
+  };
+  data = {
+    tkID: "",
+    itemData: {},
+    workFlowNodeID: "",
+    resultCode: null,
+    nextRoleIDUserIDS: "",
+    nextExecuteUserIDS: "",
+    checkOpinion: "",
+    pickerArray: [],
+    pickerChoose: 0,
+    hdjkje: "",
+    jkll: "",
+    yqll: "",
+    cjrID: "",
+    roleId: "",
+    isjk: "",
+    nextRoleIDUserIDSArray: []
+  };
+  methods = {
+    bindChange: function(e) {
+      this.pickerChoose = e.detail.value;
+      this.cjrID = this.data.pickerArray[e.detail.value].loanUserID;
+    },
+    radioChange(e) {
+      let value = e.detail.value.split(",");
+      if (value.length > 1) {
+        var todo = "nextRoleIDUserIDSArray[" + value[0] + "]";
+        this.roleId = e.detail.value.split(",")[0];
+        this[todo] = value[1] + value[2];
+      } else {
+        this.nextExecuteUserIDS = e.detail.value;
+      }
+    },
+    bindKeyInput(e) {
+      this[e.currentTarget.dataset.type] = e.detail.value;
+    },
+    formSubmit(e) {
+      if (this.isjk === "1" && this.resultCode === "1") {
+        if (!this.getString(e.detail.value.hdjkje) || e.detail.value.hdjkje==='0') {
+          this.$alert("温馨提示", "请输入核定借款金额");
+          return;
+        }
+        if (!this.getString(e.detail.value.jkll) || e.detail.value.jkll==='0') {
+          this.$alert("温馨提示", "请输入借款利率");
+          return;
+        }
+        if (!this.getString(e.detail.value.yqll) || e.detail.value.yqll==='0') {
+          this.$alert("温馨提示", "请输入逾期利率");
+          return;
+        }
+        if (
+          e.detail.value.jkll < 0 ||
+          e.detail.value.jkll > 36 ||
+          e.detail.value.yqll > 36 ||
+          e.detail.value.yqll < 0
+        ) {
+          this.$alert("温馨提示", "借款利率，逾期利率填写不正确");
+          return;
+        }
+        if (e.detail.value.hdjkje > this.itemData.loaninfo.sqjkje) {
+          this.$alert("温馨提示", "核定借款金额不能大于申请借款金额");
+          return;
+        }
+      }
+      if (e.detail.value.checkOpinion === "" && this.resultCode !== 1) {
+        this.$alert("温馨提示", "请填写不通过的原因");
+        return;
+      }
+      wepy.showLoading({
+        title: "加载中"
+      });
+      this.$post(
+        {
+          url: service.get_commit_CheckOpinion,
+          data: {
+            tkID: this.tkID,
+            workFlowNodeID: this.workFlowNodeID,
+            resultCode: this.resultCode,
+            nextRoleIDUserIDS: this.nextRoleIDUserIDSArray.join(","),
+            nextExecuteUserIDS: this.nextExecuteUserIDS,
+            checkOpinion: e.detail.value.checkOpinion || "",
+            hdjkje: e.detail.value.hdjkje,
+            jkll: e.detail.value.jkll,
+            yqll: e.detail.value.yqll,
+            cjrID: this.cjrID
+          }
+        },
+        {
+          success: ({ code, data }) => {
+            wepy.showToast({
+              title: "操作成功",
+              icon: "success",
+              duration: 1000
+            });
+            setTimeout(function() {
+              wepy.navigateBack();
+            }, 1000);
+          }
+        }
+      );
+    },
+    formReset() {
+      wepy.navigateBack();
+    }
+  };
+  getItems() {
+    this.$post(
+      {
+        url: service.get_input_CheckOpinionBefore,
+        data: {
+          tkID: this.tkID,
+          workFlowNodeID: this.workFlowNodeID,
+          resultCode: this.resultCode
+        }
+      },
+      {
+        success: ({ code, data }) => {
+          if (data.nextWorkNodeList && data.nextWorkNodeList[0].roleId) {
+            const nextWorkNodeList = data.nextWorkNodeList;
+            let nextWorkListArr = [];
+            for (let i = 0; i < nextWorkNodeList.length; i++) {
+              nextWorkListArr.push(
+                nextWorkNodeList[i].roleId +
+                  nextWorkNodeList[i].roleUserList[0].roleUserID
+              );
+            }
+            this.itemData = data;
+            this.pickerArray = data.loaninfo ? data.loaninfo.loanuserlist : [];
+            this.cjrID = data.loaninfo
+              ? data.loaninfo.loanuserlist[0].loanUserID
+              : "";
+            this.nextRoleIDUserIDSArray = nextWorkListArr;
+            this.hdjkje = data.loaninfo ? data.loaninfo.hdjkje : "";
+            this.jkll = data.loaninfo ? data.loaninfo.jkll : "";
+            this.yqll = data.loaninfo ? data.loaninfo.yqll : "";
+          } else if (data.nextWorkNodeList) {
+            this.itemData = data;
+            this.pickerArray = data.loaninfo ? data.loaninfo.loanuserlist : [];
+            this.cjrID = data.loaninfo
+              ? data.loaninfo.loanuserlist[0].loanUserID
+              : "";
+            this.nextExecuteUserIDS =
+              data.nextWorkNodeList.length > 0
+                ? data.nextWorkNodeList[0].roleUserList[0].roleUserID
+                : "";
+            this.hdjkje = data.loaninfo ? data.loaninfo.hdjkje : "";
+            this.jkll = data.loaninfo ? data.loaninfo.jkll : "";
+            this.yqll = data.loaninfo ? data.loaninfo.yqll : "";
+          } else {
+            this.itemData = data;
+            this.pickerArray = data.loaninfo ? data.loaninfo.loanuserlist : [];
+            this.cjrID = data.loaninfo
+              ? data.loaninfo.loanuserlist[0].loanUserID
+              : "";
+            this.hdjkje = data.loaninfo ? data.loaninfo.hdjkje : "";
+            this.jkll = data.loaninfo ? data.loaninfo.jkll : "";
+            this.yqll = data.loaninfo ? data.loaninfo.yqll : "";
+          }
+          this.$apply();
+        }
+      }
+    );
+  }
+  onLoad(options) {
+    this.tkID = this.$parent.globalData.tkID;
+    this.workFlowNodeID = options.workFlowNodeID;
+    this.resultCode = options.resultCode;
+    this.isjk = options.isjk;
+    this.getItems();
+  }
+}
+</script>
+
+<style lang="css">
+.weui-cell__hd {
+  align-self: flex-start;
+}
+.button {
+  margin-top: 30rpx;
+}
+.ft-image__thumb {
+  width: 30rpx;
+  height: 30rpx;
+}
+</style>

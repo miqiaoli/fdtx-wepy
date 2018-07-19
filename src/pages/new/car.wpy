@@ -1,0 +1,375 @@
+<template>
+    <view class="page__bd">
+        <form bindsubmit="formSubmit">
+            <view class="weui-cells weui-cells_after-title">
+                <navigator class="weui-cell weui-cell_input" url="/pages/other/car-list?list={{carList}}" hover-class="navigator-hover">
+                    <view class="weui-cell__hd">参与车辆：<text class="color-red">*</text></view>
+                    <view class="weui-cell__bd">
+                        <view class="weui-input" wx:if="{{carName}}">{{carName}}</view>
+                        <view wx:else class="weui-input color-ccc">选择参与车辆</view>
+                    </view>
+                    <view class="weui-cell__ft weui-cell__ft_in-access"></view>
+                </navigator>
+                <view class="weui-cell weui-cell_input">
+                    <view class="weui-cell__hd">
+                        <view class="weui-label">车辆使用人：<text class="color-red">*</text></view>
+                    </view>
+                    <view class="weui-cell__bd">
+                        <view class="weui-input">{{infoUserNames}}<block wx:if="{{infoUserLength>2}}">等用户</block></view>
+                    </view>
+                    <view class="weui-cell__ft" bindtap="addUser">
+                        <image class='ft-image__thumb' src="/images/icons/add.png" />
+                    </view>
+                </view>
+                <view class="weui-cell weui-cell_input">
+                    <view class="weui-cell__hd">
+                        <view class="weui-label">出发前里程数：<text class="color-red">*</text></view>
+                    </view>
+                    <view class="weui-cell__bd">
+                        <input class="weui-input" type="number" name="startMileage" placeholder="请输入里程数" />
+                    </view>
+                </view>
+                <view class="weui-cell weui-cell_input">
+                    <view class="weui-cell__hd">
+                        <view class="weui-label">结束后里程数：<text class="color-red">*</text></view>
+                    </view>
+                    <view class="weui-cell__bd">
+                        <input class="weui-input" type="number" name="endMileage" placeholder="请输入里程数" />
+                    </view>
+                </view>
+                <view class="weui-cell weui-cell_input">
+                    <view class="weui-cell__hd">
+                        <view class="weui-label">加油方式：</view>
+                    </view>
+                    <view class="weui-cell__bd">
+                        <view class="weui-input color-blue" @tap="changeType" wx:if="{{gasFundTypeindex === 0}}" data-index="0">无</view>
+                        <view class="weui-input color-blue" @tap="changeType" wx:elif="{{gasFundTypeindex === 1}}" data-index="1">油卡</view>
+                        <view class="weui-input color-blue" @tap="changeType" wx:elif="{{gasFundTypeindex === 2}}" data-index="2">现金</view>
+                        
+                    </view>
+                </view>
+                <view class="weui-cell weui-cell_input" wx:if="{{gasFundType === 'yk' || gasFundType === 'xj'}}">
+                    <view class="weui-cell__hd">
+                        <view class="weui-label">当天加油费：<text class="color-red">*</text></view>
+                    </view>
+                    <view class="weui-cell__bd">
+                        <input class="weui-input" type="number" name="gasFee" placeholder="请输入加油费" />
+                    </view>
+                </view>
+                <view class="weui-cell weui-cell_input">
+                    <view class="weui-cell__hd">
+                        <view class="weui-label">当天过路费：</view>
+                    </view>
+                    <view class="weui-cell__bd">
+                        <input class="weui-input" type="number" name="roadToll" placeholder="请输入过路费" />
+                    </view>
+                </view>
+                <view class="weui-cell weui-cell_input">
+                    <view class="weui-cell__hd">
+                        <view class="weui-label">出车日期：</view>
+                    </view>
+                    <view class="weui-cell__bd">
+                        <picker mode="date" value="{{date}}" start="2015-09-01" end="{{date}}" @change="bindDateChange">
+                            <view class="weui-input">{{date}}</view>
+                        </picker>
+                    </view>
+                    <view class="weui-cell__ft weui-cell__ft_in-access"></view>
+                </view>
+            </view>
+            <view class="weui-cells__title">其他说明</view>
+            <view class="weui-cells weui-cells_after-title">
+                <view class="weui-cell">
+                    <view class="weui-cell__bd">
+                        <textarea class="weui-textarea" name="otherContent" placeholder="其他说明" style="height: 3.3em" />
+                    </view>
+                </view>
+            </view>
+            <view class="weui-cells">
+                <view class="weui-cell">
+                    <view class="weui-cell__bd">
+                        <view class="weui-uploader">
+                            <view class="weui-uploader__hd">
+                                <view class="weui-uploader__title">图片上传<text class="color-red">*</text></view>
+                                <!-- <view class="weui-uploader__info">{{files.length}}/2</view> -->
+                            </view>
+                            <view class="weui-uploader__bd">
+                                <view class="weui-uploader__files" id="uploaderFiles">
+                                    <block wx:for="{{files}}" wx:key="*this">
+                                        <view class="weui-uploader__file">
+                                            <image class="weui-uploader__img" catch:tap="previewImage" data-index="{{index}}" src="{{imgHost +'/'+ item.itemUrl}}" mode="aspectFill" />
+                                            <image class="icon-delete" src="/images/icons/icon-delete.png" mode="aspectFill" catch:tap="deleteImage" data-id="{{item.fileID}}" data-index="{{index}}" />
+                                        </view>
+                                    </block>
+                                </view>
+                                <view class="weui-uploader__input-box">
+                                    <view class="weui-uploader__input" @tap="chooseImage"></view>
+                                </view>
+                            </view>
+                        </view>
+                    </view>
+                </view>
+            </view>
+            <view class="page__bd_spacing">
+                <button class="weui-btn" type="primary" formType="submit">提交</button>
+                <button class="weui-btn" type="default" @tap="goBack">取消</button>
+            </view>
+        </form>
+    </view>
+</template>
+
+<script>
+import wepy from "wepy";
+import { service } from "../../config.js";
+import base from "../../mixins/base";
+import http from "../../mixins/http";
+import location from "../../mixins/location";
+import events from "../../utils/event";
+
+export default class NewCar extends wepy.page {
+  mixins = [base, http, location];
+  config = {
+    navigationBarTitleText: "车辆使用情况上报"
+  };
+  data = {
+    tkID: "",
+    imgHost: "",
+    id: "",
+    taskType: 3,
+    itemData: {},
+    infoUserIDS: "",
+    infoUserNames: "",
+    carList: [],
+    files: [],
+    fileUrl: [],
+    gasFundType: '',
+    gasFundTypeArr: ['','yk','xj'],
+    gasFundTypeindex: 0,
+    carName: "",
+    date: "2016-09-01",
+    infoUserLength: 0
+  };
+  methods = {
+    bindDateChange: function(e) {
+      this.date = e.detail.value;
+    },
+    changeType(e) {
+      const index = this.getNumber(e.target.dataset.index);
+      if (index === 2) {
+        this.gasFundTypeindex = 0;
+      } else {
+        this.gasFundTypeindex = index + 1;
+      }
+      
+      this.gasFundType = this.gasFundTypeArr[this.gasFundTypeindex];
+      this.$apply();
+    },
+    addUser() {
+      wepy.navigateTo({
+        url:
+          "/pages/contacts/checked?contactIds=" +
+          this.infoUserIDS +
+          "&contactNames=" +
+          this.infoUserNames
+      });
+    },
+    chooseImage(e) {
+      const that = this;
+      wepy.chooseImage({
+        sizeType: ["original", "compressed"], // 可以指定是原图还是压缩图，默认二者都有
+        sourceType: ["album", "camera"], // 可以指定来源是相册还是相机，默认二者都有
+        success: function(res) {
+          // 返回选定照片的本地文件路径列表，tempFilePath可以作为img标签的src属性显示图片
+          for (var i = 0; i < res.tempFilePaths.length; i++) {
+            that.uploadImage(res.tempFilePaths[i], i);
+          }
+        }
+      });
+    },
+    previewImage(e) {
+      const index = e.currentTarget.dataset.index;
+      wepy.previewImage({
+        current: this.fileUrl[index], // 当前显示图片的http链接
+        urls: this.fileUrl // 需要预览的图片http链接列表
+      });
+    },
+    deleteImage(e) {
+      const fileID = e.currentTarget.dataset.id;
+      const index = e.currentTarget.dataset.index;
+      this.$post(
+        {
+          url: service.get_file_delete,
+          data: {
+            tkID: this.tkID,
+            fileID: fileID
+          }
+        },
+        {
+          success: ({ code, data }) => {
+            this.files.splice(index, 1);
+            this.fileUrl.splice(index, 1);
+            this.$apply();
+          }
+        }
+      );
+    },
+    formSubmit(e) {
+     if (!this.carID) {
+        this.$alert("温馨提示", "请先选择参与车辆");
+        return;
+      }
+      if (!this.infoUserIDS) {
+        this.$alert("温馨提示", "请先选择车辆使用人");
+        return;
+      }
+      if (!e.detail.value.startMileage) {
+        this.$alert("温馨提示", "请先输入出发前里程数");
+        return;
+      }
+      if (!e.detail.value.endMileage) {
+        this.$alert("温馨提示", "请先输入结束后里程数");
+        return;
+      }
+      if((this.gasFundType === 'yk' || this.gasFundType === 'xj') && !e.detail.value.gasFee){
+        this.$alert("温馨提示", "请先输入加油费");
+        return;
+      }
+       if (this.files.length < 1) {
+        this.$alert("温馨提示", "请先上传图片");
+        return;
+      }
+      wepy.showLoading({
+        title: "上传中..."
+      });
+
+      this.$post(
+        {
+          url: service.get_commit_MaintenanceCarOpLog,
+          data: {
+            tkID: this.tkID,
+            id: this.itemData.id,
+            carID: this.carID,
+            userIDS: this.infoUserIDS,
+            startMileage: e.detail.value.startMileage,
+            endMileage: e.detail.value.endMileage,
+            gasFundType: this.gasFundType,
+            gasFee: e.detail.value.gasFee,
+            roadToll: e.detail.value.roadToll,
+            otherContent: e.detail.value.otherContent || "",
+            reportDate: this.date
+          }
+        },
+        {
+          success: ({ code, data }) => {
+            wepy.showToast({
+              title: "成功！",
+              icon: "success",
+              duration: 1000
+            });
+            setTimeout(function() {
+              wepy.redirectTo({
+                url: "/pages/index"
+              });
+            }, 1000);
+          }
+        }
+      );
+    },
+    goBack() {
+      wepy.navigateBack();
+    }
+  };
+  uploadImage(filePath, i) {
+    wepy.showLoading({
+      title: "上传中..."
+    });
+    const that = this;
+    wepy.uploadFile({
+      url: service.get_file_upload,
+      filePath: filePath,
+      name: "file",
+      formData: {
+        tkID: this.tkID,
+        infoID: this.itemData.id,
+        infoType: "dw05"
+      },
+      success: function(res) {
+        const resJson = JSON.parse(res.data);
+        that.files = that.files.concat(resJson);
+        that.fileUrl = that.fileUrl.concat(
+          that.imgHost + "/" + resJson.itemUrl
+        );
+        that.$apply();
+        wepy.hideLoading();
+      }
+    });
+  }
+  getChooseUser(ids, names) {
+    this.infoUserIDS = ids;
+    this.infoUserNames = names;
+    this.infoUserLength = ids.split(',').filter(d => d).length
+  }
+  getChooseCar(ids, names) {
+    this.carID = ids;
+    this.carName = names;
+    this.$apply();
+  }
+  getItems() {
+    this.$post(
+      {
+        url: service.get_view_MaintenanceTask,
+        data: {
+          tkID: this.tkID,
+          id: "",
+          taskType: this.taskType
+        }
+      },
+      {
+        success: ({ code, data }) => {
+          this.itemData = data;
+          this.carList = JSON.stringify(data.carList);
+          this.$apply();
+        }
+      }
+    );
+  }
+  onLoad() {
+    this.imgHost = service.host;
+    this.tkID = this.$parent.globalData.tkID;
+    let data = new Date();
+    let startDate = new Date(data);
+    startDate.setDate(data.getDate());
+    this.date = this.formatTime(startDate);
+
+    this.getItems();
+    events.addEvents("getChooseUser", this.getChooseUser, this);
+    events.addEvents("getChooseCar", this.getChooseCar, this);
+    this.$apply();
+  }
+}
+</script>
+
+<style lang="css">
+.weui-btn {
+  margin-top: 40rpx;
+}
+.ft-image__thumb {
+  width: 44rpx;
+  height: 44rpx;
+}
+.weui-uploader__file {
+  position: relative;
+}
+.weui-uploader__file,
+.weui-uploader__input-box {
+  margin-top: 18rpx;
+  margin-bottom: 10rpx;
+}
+.icon-delete {
+  width: 40rpx;
+  height: 40rpx;
+  position: absolute;
+  top: -10rpx;
+  right: -10rpx;
+  z-index: 2;
+}
+</style>

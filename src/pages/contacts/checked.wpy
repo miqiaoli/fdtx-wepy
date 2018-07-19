@@ -1,0 +1,165 @@
+<template>
+  <view class="page__hd">
+    <SearchBar :placeholder="placeholder" @childFn.user="parentSearch"></SearchBar>
+    <view class="weui-cells weui-cells_after-title">
+      <view class="weui-cell weui-cell_access" hover-class="weui-cell_active" bindtap='chooseType' data-type='1'>
+        <view class="weui-cell__hd">选择用户部门</view>
+        <view class="weui-cell__bd"></view>
+        <view class="weui-cell__ft weui-cell__ft_in-access">{{deptName}}</view>
+      </view>
+      <view class="weui-cell weui-cell_access" hover-class="weui-cell_active" bindtap='chooseType' data-type='0'>
+        <view class="weui-cell__hd">选择所在岗位</view>
+        <view class="weui-cell__bd"></view>
+        <view class="weui-cell__ft weui-cell__ft_in-access">{{roleName}}</view>
+      </view>
+    </view>
+    <button class="weui-btn" type="primary" bindtap="btnSearch">确定添加用户</button>
+    <view class="weui-cells__title">已选用户</view>
+    <view class="weui-cells weui-cells_after-title" wx:if="{{contactNames}}">
+      <navigator url="./checked-list?userIDS={{contactIds}}">
+        <view class="weui-cell">
+          <view class="weui-cell__bd">{{contactNames}}<block wx:if="{{usercount>1}}">等用户</block></view>
+          <view class="weui-cell__ft weui-cell__ft_in-access">{{usercount}}</view>
+        </view>
+      </navigator>
+    </view>
+    <view class="weui-flex" wx:if="{{contactNames}}">
+      <view class="weui-flex__item">
+        <view class="placeholder">
+          <button class="weui-btn" type="primary" bindtap="btnOk">确定</button>
+        </view>
+      </view>
+      <view class="weui-flex__item">
+        <view class="placeholder">
+          <button class="weui-btn" type="default" bindtap="btnReset">重置</button>
+        </view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from "wepy";
+import { service } from "../../config.js";
+import base from "../../mixins/base";
+import http from "../../mixins/http";
+import SearchBar from "../../components/searchbar";
+import events from "../../utils/event";
+
+export default class ContactChecked extends wepy.page {
+  mixins = [base, http];
+  config = {
+    navigationBarTitleText: "选择用户"
+  };
+  data = {
+    placeholder: "搜索用户",
+    username: "",
+    contactIds: "",
+    contactIdsArr: [],
+    contactNames: "",
+    usercount: 0,
+    deptName: "",
+    deptID: null,
+    roleName: "",
+    roleID: null,
+    checkType: ""
+  };
+  methods = {
+    parentSearch(title, evt) {
+      this.username = title;
+      this.getItems({
+        tkID: this.tkID,
+        username: title
+      });
+    },
+    chooseType(e) {
+      this.checkType = e.currentTarget.dataset.type === "1" ? "dept" : "role";
+      wepy.navigateTo({
+        url: "./checked-list?type=" + this.checkType
+      });
+    },
+    btnSearch() {
+      this.getItems({
+        tkID: this.tkID,
+        username: this.username,
+        deptID: this.deptID || "",
+        roleID: this.roleID || ""
+      });
+    },
+    btnOk() {
+      events.emitEvents("getChooseUser", this.contactIds, this.contactNames);
+      wepy.navigateBack({});
+    },
+    btnReset() {
+      this.deptName = "";
+      this.deptID = null;
+      this.roleName = "";
+      this.roleID = null;
+      this.contactNames = "";
+      this.contactIds = "";
+      this.contactIdsArr = [];
+    }
+  };
+  components = {
+    SearchBar
+  };
+  getItems(data) {
+    wepy.showLoading({
+      title: "查询中..."
+    });
+    this.$post(
+      {
+        url: service.get_list_UserForDeptRole,
+        data: data
+      },
+      {
+        success: ({ code, data }) => {
+          this.contactIds = data.userIDS;
+          this.contactIdsArr = this.contactIds.split(",");
+          this.contactNames = data.userNameS;
+          this.contactIdsArr = this.contactIdsArr.filter(d => d);
+          this.usercount = this.contactIdsArr.length;
+          this.$apply();
+        },
+        complete: () => {
+          wepy.hideLoading();
+        }
+      }
+    );
+  }
+  getChooseData(ids, names) {
+    const id = this.checkType + "ID";
+    const name = this.checkType + "Name";
+    this[id] = ids;
+    this[name] = names;
+    this.$apply();
+  }
+  getChooseContent(ids, names) {
+    this.contactIds = ids;
+    this.contactNames = names.join(",");
+    ids = ids.filter(d => d);
+    this.usercount = ids.length;
+    this.$apply();
+  }
+  onLoad(options) {
+    this.contactIds = options.contactIds || "";
+    this.tkID = this.$parent.globalData.tkID;
+    this.contactNames = options.contactNames || "";
+    this.usercount = this.contactIds
+      ? this.contactIds.split(",").filter(d => d).length
+      : 0;
+    this.$apply();
+    events.addEvents("getChooseData", this.getChooseData, this);
+    events.addEvents("getChooseContent", this.getChooseContent, this);
+  }
+  onUnload() {
+    // this.deletePages(this)
+  }
+}
+</script>
+
+<style lang="css">
+.weui-btn {
+  margin: 40rpx auto 80rpx;
+}
+</style>

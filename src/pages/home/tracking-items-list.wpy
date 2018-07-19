@@ -1,0 +1,204 @@
+<template>
+<view class="page__bd bg__white">
+  <view class="weui-flex flex-align-center bg__search">
+    <view class="color-blue searchbar-text">
+      <picker bindchange="bindChange" value="{{pickerChoose}}" range="{{pickerArray}}" range-key="{{'hintTypeName'}}">
+        <view class="picker">
+          <text class="all-read">{{pickerArray[pickerChoose].hintTypeName}}</text>
+        </view>
+      </picker>
+    </view>
+    <view class="weui-flex__item">
+      <SearchBar :placeholder="placeholder" @childFn.user="parentSearch"></SearchBar>
+    </view>
+  </view>
+  <block wx:if="{{list.length > 0}}">
+    <view class="weui-panel weui-panel-no-margin weui-panel_access bg__white">
+      <view class="weui-media-box weui-media-box_appmsg" wx:for="{{list}}" wx:key="id">
+        <view class="weui-media-box__bd weui-media-box__bd_in-appmsg">
+          <navigator url="/pages/other/iframe?url={{item.itemUrl}}" hover-class="weui-cell_active">
+            <view class="weui-media-box__title">{{item.title}}</view>
+          </navigator>
+          <view class="weui-media-box__info">
+            <view class="weui-media-box__info__meta">{{item.FlowStatusName}}</view>
+            <navigator url="/pages/contacts/details?id={{item.senderID}}" hover-class="weui-cell_active">
+              <view class="weui-media-box__info__meta color-blue {{item.BusinessTypeName ? 'weui-media-box__info__meta_extra' : ''}}">{{item.SenderName}}</view>
+            </navigator>
+            <view class="weui-media-box__info__meta {{item.ApplyerName ? 'weui-media-box__info__meta_extra' : ''}}">{{item.dqtl}}/{{item.zls}}</view>
+          </view>
+        </view>
+        <view class="weui-cell__ft" bindtap="operatBtn" data-info='{{item.isSetFocus}}' data-id='{{item.id}}'>
+          <image class='ft-image__thumb' src="/images/icons/operat.png"></image>
+        </view>
+      </view>
+    </view>
+  </block>
+  <ListStates :loading.sync="loading" :noMore.sync="noMore" :noList.sync="noList"></ListStates>
+  <Tabbar></Tabbar>
+</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import {
+  service
+} from '../../config.js'
+import base from '../../mixins/base'
+import http from '../../mixins/http'
+import ListStates from '../../components/listStates'
+import SearchBar from '../../components/searchbar'
+import Tabbar from '../../components/tabbar'
+
+export default class TrackingItemsList extends wepy.page {
+  mixins = [base, http]
+  config = {
+    navigationBarTitleText: '我的跟踪项',
+    enablePullDownRefresh: true,
+    onReachBottomDistance: 100
+  }
+  data = {
+    tkID: '',
+    list: [],
+    noList: false,
+    noMore: false,
+    loading: true,
+    start: 1,
+    limit: 15,
+    placeholder: '搜索',
+    title: '',
+    pickerArray: [],
+    pickerChoose: 0,
+    hintType: ''
+  }
+  components = {
+    ListStates,
+    SearchBar,
+    Tabbar
+  }
+  methods = {
+    bindChange(e) {
+      this.start = 1
+      this.pickerChoose = e.detail.value
+      this.hintType = this.pickerArray[e.detail.value].hintType
+      this.noMoreList = false
+      this.getList()
+      this.$apply()
+    },
+    parentSearch(title, evt) {
+      this.title = title
+      this.getList()
+    },
+    operatBtn(e) {
+      const info = e.currentTarget.dataset.info
+      const id = e.currentTarget.dataset.id
+      const operatList = (info === '1') ? ['取消关注'] : ['添加关注']
+      const that = this
+      wepy.showActionSheet({
+        itemList: operatList,
+        success: function(res) {
+          if (info === '1') {
+            that.getFocus(id, 0)
+          } else {
+            that.getFocus(id, 1)
+          }
+        },
+        fail: function(res) {
+          console.log(res.errMsg)
+        }
+      })
+    }
+  }
+  getFocus(id, isSet) {
+    this.$post({
+      url: service.get_focus_ForBusiness,
+      data: {
+        tkID: this.tkID,
+        id: id,
+        isSet: isSet
+      }
+    }, {
+      success: ({
+        code,
+        data
+      }) => {
+        wepy.showToast({
+          title: '操作成功',
+          icon: 'success'
+        })
+        this.getList()
+      }
+    })
+  }
+  getList() {
+    if (this.start === 1) {
+      this.list = []
+    }
+    this.$post({
+      url: service.get_list_BusinessManageNowStatus,
+      data: {
+        tkID: this.tkID,
+        cruPage: this.start,
+        pageSize: this.limit,
+        hintType: this.hintType,
+        title: this.title
+      }
+    }, {
+      success: ({
+        code,
+        data
+      }) => {
+        if (data.dataRows.length === 0) {
+          this.noList = true
+        }
+        if (this.start === 1) {
+          this.list = data.dataRows
+          this.maxPage = Math.ceil(data.maxPage / this.limit)
+        } else {
+          this.list = [
+            ...this.list,
+            ...data.dataRows
+          ]
+        }
+        this.$apply()
+      },
+      complete: () => {
+        this.loading = false
+      }
+    })
+  }
+  onLoad() {
+    this.tkID = this.$parent.globalData.tkID
+    this.getList()
+  }
+  onPullDownRefresh() {
+    this.start = 1
+    this.getList()
+    wepy.stopPullDownRefresh()
+  }
+  onReachBottom() {
+    if (this.start < this.maxPage) {
+      ++this.start
+      this.getList()
+    } else {
+      this.noMore = true
+    }
+    this.$apply()
+  }
+}
+</script>
+
+<style lang="css">
+.weui-cell__ft {
+    width: 50rpx;
+}
+.ft-image__thumb {
+    width: 30rpx;
+    height: 30rpx;
+}
+.weui-media-box__info__meta_extra {
+  padding-left: 10rpx;
+}
+.weui-media-box__info__meta {
+  padding-right: 10rpx;
+}
+</style>

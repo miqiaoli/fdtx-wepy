@@ -1,0 +1,183 @@
+<script>
+import wepy from 'wepy'
+import 'wepy-async-function'
+import {
+  service
+} from './config.js'
+
+export default class extends wepy.app {
+  config = {
+    pages: [
+      'pages/index',
+      'pages/mime',
+      'pages/home/email-list',
+      'pages/home/email-details',
+      'pages/home/email-checked',
+      'pages/home/notice-list',
+      'pages/home/agency-items-list', /* 待办项 */
+      'pages/home/agency-items-checked',
+      'pages/home/approve-items-list', /* 审批项 */
+      'pages/home/approve-items-details',
+      'pages/home/approve-items-checked',
+      'pages/home/tracking-items-list', /* 跟踪项 */
+      'pages/home/task-items-list', /* 任务项,标记项 */
+      'pages/home/task-items-check',
+      'pages/home/site-items-list', /* 站点 */
+      'pages/home/site-items-check',
+      'pages/user/login',
+      'pages/user/edit-user',
+      'pages/query/items', /* 查询项 */
+      'pages/query/list',
+      'pages/new/items', /* 新建项 */
+      'pages/new/mark', /* 新建标记 */
+      'pages/new/logs', /* 日志上报 */
+      'pages/new/car', /* 车辆上报 */
+      'pages/new/task', /* 新建任务 */
+      'pages/chart/items', /* 报表项 */
+      'pages/contacts/details',
+      'pages/contacts/checked',
+      'pages/contacts/checked-list', /* 通讯录列表 */
+      'pages/contacts/checked-role', /* 人员确认 */
+      'pages/contacts/list',
+      'pages/other/iframe',
+      'pages/other/car-list', /* 车辆列表 */
+      'pages/other/site-list', /* 站点列表 */
+      'pages/other/op-type-list' /* 代维日志作业类型列表 */
+    ],
+    window: {
+      navigationBarTitleText: '方大通信项目管理系统',
+      navigationBarTextStyle: 'white',
+      navigationBarBackgroundColor: '#049BFF',
+      backgroundColor: '#eaeaea',
+      backgroundTextStyle: 'light'
+    },
+    networkTimeout: {
+      request: 5000,
+      downloadFile: 10000
+    },
+    debug: true
+  }
+
+  globalData = {
+    tkID: null,
+    OpTypeDepth: 0,
+    checkListDepth: 0,
+    socketConnectFail: false
+  }
+
+  constructor() {
+    super()
+    this.use('requestfix')
+    // this.use('promisify')
+  }
+
+  onLaunch() {}
+
+  onShow(options) {}
+
+  /* ============= 工具方法（app没法用mixins，就再写一遍了） ============= */
+  isObject(item) {
+    return typeof item === 'object' && !this.isArray(item)
+  }
+  isArray(item) {
+    return Object.prototype.toString.apply(item) === '[object Array]'
+  }
+  isUndefined(item) {
+    return typeof item === 'undefined'
+  }
+
+  /* ========================= 更新缓存信息 ======================== */
+  $updateGlobalData(name, obj) {
+    // 校验: globalData
+    if (!this.globalData) return
+    // 校验: 操作字段
+    if (typeof name !== 'string' || name === '') return {}
+    // 取已有信息
+    const info = this.globalData[name] || {}
+    // 更新缓存
+    if (obj && this.isObject(obj)) {
+      // Object合并第一层
+      this.globalData[name] = Object.assign({}, info, obj)
+    } else if (!this.isUndefined(obj)) {
+      // 其他非undefined数据直接覆盖
+      this.globalData[name] = obj
+    }
+    this.$apply && this.$apply()
+    console.info(`[${obj ? 'UPDATE' : 'GET'} GlobalData ${name}]:`, this.globalData[name])
+    return this.globalData[name]
+  }
+
+  getUserInfo(cb) {
+    if (this.globalData.tkID) {
+      return this.globalData.tkID
+    }
+    // wepy.login()
+    //   .then(res => {
+    //     return wepy.request({
+    //       url: service.login,
+    //       method: 'POST',
+    //       data: JSON.stringify({
+    //         jsonString: {
+    //           code: res.code
+    //         }
+    //       })
+    //     })
+    //   })
+    //   .then(res => {
+    //     if (res.data.isNew === '1') {
+    //       wepy.reLaunch({
+    //         url: '/pages/user/login?tkID=' + res.data.tkID
+    //       })
+    //     } else {
+    //       wepy.setStorageSync('tkID', res.data.tkID)
+    //       this.$updateGlobalData('tkID', res.data.tkID)
+    //       this.$updateGlobalData('userInfo', res.data.userInfo)
+    //       wepy.setStorageSync('userInfo', res.data.userInfo)
+    //       cb && cb(res.data.tkID)
+    //     }
+    //   })
+
+    wepy.login({
+      success(res) {
+        wepy.request({
+          url: service.login,
+          method: 'POST',
+          data: JSON.stringify({
+            jsonString: {
+              code: res.code
+            }
+          }),
+          success: function(res) {
+            if (res.data.isNew === '1') {
+              wepy.reLaunch({
+                url: '/pages/user/login?tkID=' + res.data.tkID
+              })
+            } else {
+              wepy.setStorageSync('tkID', res.data.tkID)
+              this.$updateGlobalData('tkID', res.data.tkID)
+              this.$updateGlobalData('userInfo', res.data.userInfo)
+              wepy.setStorageSync('userInfo', res.data.userInfo)
+              cb && cb(res.data.tkID)
+            }
+          }
+        })
+      }
+    })
+  }
+}
+</script>
+
+<style lang="less">
+@import "./styles/weui/index.less";
+@import "./styles/custom/index.less";
+.page__bd_spacing {
+    padding-left: 24rpx;
+    padding-right: 24rpx;
+}
+.weui-media-box {
+    padding: 16rpx 30rpx;
+}
+.weui-media-box__info {
+    margin-top: 16rpx;
+}
+</style>

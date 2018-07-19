@@ -1,0 +1,146 @@
+<template>
+<view class="page__bd">
+  <view class="weui-cells weui-cells_after-title">
+    <view class="weui-cell weui-cell_input">
+      <view class="weui-cell__hd">主题：</view>
+      <view class="weui-cell__bd">
+        <navigator url="/pages/other/iframe?url={{itemData.itemUrl}}">
+          {{itemData.bmsTitle}}
+        </navigator>
+      </view>
+    </view>
+    <view class="weui-cell weui-cell_input">
+      <view class="weui-cell__hd">产生时间：</view>
+      <view class="weui-cell__bd">{{itemData.sendDate}}</view>
+    </view>
+    <view class="weui-cell weui-cell_input">
+      <view class="weui-cell__hd">流程状态：</view>
+      <view class="weui-cell__bd">{{itemData.FlowStatusName}}</view>
+    </view>
+    <view class="weui-cell weui-cell_input">
+      <view class="weui-cell__hd">发送人：</view>
+      <view class="weui-cell__bd">{{itemData.SenderName}}</view>
+    </view>
+    <view class="weui-cell weui-cell_input">
+      <view class="weui-cell__hd">操作类型名称：</view>
+      <view class="weui-cell__bd">{{itemData.actTypeName}}</view>
+    </view>
+    <view class="weui-cell weui-cell_input">
+      <view class="weui-cell__hd">产生时间：</view>
+      <view class="weui-cell__bd">{{itemData.sendDate}}</view>
+    </view>
+  </view>
+  <block wx:if="{{itemData.userList}}">
+    <view class="weui-cells__title">选择被转派人：</view>
+    <view class="weui-cells weui-cells_after-title">
+      <radio-group @change="radioChange">
+        <label class="weui-cell weui-check__label" wx:for="{{itemData.userList}}" wx:key="value">
+            <radio class="weui-check" value="{{item.userID}}" checked="{{item.checked}}"/>
+            <view class="weui-cell__bd">{{item.userName}}</view>
+            <view class="weui-cell__ft weui-cell__ft_in-radio" wx:if="{{item.checked}}">
+                <icon class="weui-icon-radio" type="success_no_circle" size="16"></icon>
+            </view>
+        </label>
+      </radio-group>
+    </view>
+  </block>
+  <view class="page__bd_spacing">
+    <button class="weui-btn" type="primary" bindtap="btnSubmit">确定</button>
+    <button class="weui-btn" type="default" bindtap="btnCancle">取消</button>
+  </view>
+</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import {
+  service
+} from '../../config.js'
+import base from '../../mixins/base'
+import http from '../../mixins/http'
+
+export default class AgencyItemsChecked extends wepy.page {
+  mixins = [base, http]
+  config = {
+    navigationBarTitleText: '我的代办项'
+  }
+  data = {
+    tkID: '',
+    itemData: {},
+    statusID: '',
+    actType: null
+  }
+  methods = {
+    radioChange(e) {
+      this.userID = e.detail.value
+    },
+    btnSubmit(e) {
+      wepy.showLoading({
+        title: '操作中...'
+      })
+      this.$post({
+        url: service.get_act_SinoBusinessManageStatus,
+        data: {
+          tkID: this.tkID,
+          statusID: this.statusID,
+          actType: this.actType,
+          jyID: this.itemData.jyID,
+          businessID: this.itemData.businessID,
+          userID: this.userID
+        }
+      }, {
+        success: ({
+          code,
+          data
+        }) => {
+          wepy.showToast({
+            title: '成功！',
+            icon: 'success',
+            duration: 1000
+          })
+          setTimeout(function() {
+            wepy.navigateBack()
+          }, 1000)
+        }
+      })
+    },
+    btnCancle() {
+      wepy.navigateBack()
+    }
+  }
+  getItems() {
+    this.$post({
+      url: service.get_view_SinoBusinessManageStatus,
+      data: {
+        tkID: this.tkID,
+        statusID: this.statusID,
+        actType: this.actType
+      }
+    }, {
+      success: ({
+        code,
+        data
+      }) => {
+        this.itemData = data
+        this.$apply()
+      }
+    })
+  }
+  onLoad(options) {
+    this.tkID = this.$parent.globalData.tkID
+    this.actType = options.actType || this.actType
+    this.statusID = options.statusID || this.statusID
+    this.getItems()
+  }
+}
+</script>
+
+<style lang="css">
+.weui-btn {
+  margin-top: 40rpx;
+}
+.ft-image__thumb {
+    width: 44rpx;
+    height: 44rpx;
+}
+</style>

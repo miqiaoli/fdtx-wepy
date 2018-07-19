@@ -1,0 +1,128 @@
+<template>
+<view class="page__bd bg__white">
+  <view class="weui-flex flex-align-center bg__search">
+    <view class="color-blue searchbar-text">
+      <picker bindchange="bindChange" value="{{pickerChoose}}" range="{{pickerArray}}" range-key="{{'sitePropertyName'}}">
+        <view class="picker">
+          <text class="all-read">{{pickerArray[pickerChoose].sitePropertyName}}</text>
+        </view>
+      </picker>
+    </view>
+    <view class="weui-flex__item">
+      <SearchBar :placeholder="placeholder" @childFn.user="parentSearch"></SearchBar>
+    </view>
+  </view>
+  <block wx:if="{{list.length > 0}}">
+    <view class="weui-panel weui-panel-no-margin weui-panel_access bg__white">
+      <view class="weui-media-box weui-media-box_appmsg" wx:for="{{list}}" wx:key="id">
+        <view class="weui-media-box__bd weui-media-box__bd_in-appmsg" hover-class="navigator-hover" @tap="chooseSite" data-item="{{item}}">
+          <view class="weui-media-box__title">{{item.siteName}}</view>
+          <view class="weui-media-box__info">
+            <view class="weui-media-box__info__meta">所属部门：{{item.happenDeptName}}</view>
+            <view class="weui-media-box__info__meta {{item.happenDeptName ? 'weui-media-box__info__meta_extra' : ''}}">站点维护人：{{item.maintenanceUserName}}</view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </block>
+  <ListStates :loading.sync="loading" :noMore.sync="noMore" :noList.sync="noList"></ListStates>
+</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import {
+  service
+} from '../../config.js'
+import base from '../../mixins/base'
+import http from '../../mixins/http'
+import events from '../../utils/event'
+import SearchBar from '../../components/searchbar'
+import ListStates from '../../components/listStates'
+
+export default class SiteList extends wepy.page {
+  mixins = [base, http]
+  config = {
+    navigationBarTitleText: '站点列表'
+  }
+  data = {
+    tkID: '',
+    siteName: '',
+    list: [],
+    noList: false,
+    noMore: false,
+    loading: true,
+    start: 1,
+    limit: 15,
+    placeholder: '站点搜索',
+    pickerArray: [],
+    pickerChoose: 0,
+    siteProperty: ''
+  }
+  components = {
+    ListStates,
+    SearchBar
+  }
+  methods = {
+    bindChange(e) {
+      this.pickerChoose = e.detail.value
+      this.siteProperty = this.pickerArray[e.detail.value].sitePropertyID
+      this.noMoreList = false
+      this.getList()
+      this.$apply()
+    },
+    parentSearch(title, evt) {
+      this.siteName = title
+      this.getList()
+    },
+    chooseSite(e) {
+      const item = e.currentTarget.dataset.item
+      events.emitEvents('getChooseSite', item.siteID, item.siteName)
+      wepy.navigateBack()
+    }
+  }
+  getList() {
+    if (this.start === 1) {
+      this.list = []
+    }
+    this.$post({
+      url: service.get_list_MaintenanceSite,
+      data: {
+        tkID: this.tkID,
+        siteProperty: this.siteProperty,
+        siteName: this.siteName
+      }
+    }, {
+      success: ({
+        code,
+        data
+      }) => {
+        if (data.dataRows.length === 0) {
+          this.noList = true
+        }
+        if (this.start === 1) {
+          this.list = data.dataRows
+          this.maxPage = Math.ceil(data.maxPage / this.limit)
+        } else {
+          this.list = [
+            ...this.list,
+            ...data.dataRows
+          ]
+        }
+        this.pickerArray = data.sitePropertyList
+        this.$apply()
+      },
+      complete: () => {
+        this.loading = false
+      }
+    })
+  }
+  onLoad() {
+    this.tkID = this.$parent.globalData.tkID
+    this.getList()
+  }
+}
+</script>
+
+<style lang="css">
+</style>

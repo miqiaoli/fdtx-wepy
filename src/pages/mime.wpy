@@ -1,0 +1,195 @@
+<template>
+<view class="page__bd user">
+  <view class="weui-panel weui-panel_access">
+    <view class="weui-media-box weui-media-box_appmsg" hover-class="weui-cell_active">
+      <view class="weui-media-box__hd">
+        <view class="weui-media-box__thumb">
+          <open-data type="userAvatarUrl"></open-data>
+        </view>
+      </view>
+      <view class="weui-media-box__bd weui-media-box__bd_in-appmsg">
+        <view class="weui-media-box__title">{{userInfo.userName}}</view>
+        <view class="weui-media-box__desc">部门：{{userInfo.deptName}}</view>
+        <view class="weui-media-box__desc">岗位：{{userInfo.roleName}}</view>
+        <view class="weui-media-box__desc" bindtap='makePhone' data-phone='{{userInfo.mobile}}'>手机：{{userInfo.mobile}}</view>
+        <view class='edit'>
+          <navigator url='/pages/user/edit-user'>
+            <image src='../../images/icons/edit.png'></image>
+          </navigator>
+        </view>
+      </view>
+    </view>
+  </view>
+  <view class="weui-cells">
+    <navigator url='/pages/contacts/list'>
+      <view class="weui-cell">
+        <view class="weui-cell__hd icon">
+          <image src="/images/icons/contacts.png"></image>
+        </view>
+        <view class="weui-cell__bd">通讯录</view>
+        <view class="weui-cell__ft weui-cell__ft_in-access"></view>
+      </view>
+    </navigator>
+  </view>
+  <view class="weui-cells">
+    <navigator url='/pages/other/iframe?type=all&url=https://erp.fdtx.cn/help/app.html'>
+      <view class="weui-cell">
+        <view class="weui-cell__hd icon">
+          <image src="/images/icons/manual.png"></image>
+        </view>
+        <view class="weui-cell__bd">操作手册</view>
+        <view class="weui-cell__ft weui-cell__ft_in-access"></view>
+      </view>
+    </navigator>
+  </view>
+  <view class="weui-cells">
+    <view class="weui-cell" bindtap='signOut'>
+      <view class="weui-cell__hd icon">
+        <image src="/images/icons/drop-out.png"></image>
+      </view>
+      <view class="weui-cell__bd">退出</view>
+      <view class="weui-cell__ft weui-cell__ft_in-access"></view>
+    </view>
+  </view>
+  <Tabbar></Tabbar>
+</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import {
+  service
+} from '../config.js'
+import base from '../mixins/base'
+import http from '../mixins/http'
+import Tabbar from '../components/tabbar'
+
+export default class Mime extends wepy.page {
+  mixins = [base, http]
+  config = {
+    navigationBarTitleText: '首页'
+  }
+  data = {
+    tkID: '',
+    userInfo: ''
+  }
+  components = {
+    Tabbar
+  }
+  methods = {
+    makePhone(e) {
+      if (e.currentTarget.dataset.phone === '') return
+      let phone = e.currentTarget.dataset.phone
+      wepy.makePhoneCall({
+        phoneNumber: phone
+      })
+    }
+  }
+  onLoad() {
+    this.tkID = this.$parent.globalData.tkID
+    this.userInfo = this.$parent.globalData.userInfo
+  }
+  async signOut() {
+    const that = this
+    // const res = await wepy.showModal({
+    //   title: '提示',
+    //   content: '您确定要退出登录吗？'
+    // })
+    // if (res.confirm) {
+    //   that.$post({
+    //     url: service.get_wxzhjb,
+    //     data: {
+    //       tkID: that.tkID
+    //     }
+    //   }, {
+    //     success: ({
+    //       code,
+    //       data
+    //     }) => {
+    //       wepy.clearStorageSync()
+    //       that.$parent.$updateGlobalData('tkID', '')
+    //       that.$parent.getUserInfo(function(tkID) {
+    //         if (tkID) {
+    //           self.tkID = tkID
+    //         }
+    //       })
+    //     },
+    //     fail: ({
+    //       code,
+    //       data
+    //     }) => {}
+    //   })
+    // } else if (res.cancel) {
+    //   console.log('用户点击取消')
+    // }
+
+    wepy.showModal({
+      title: '提示',
+      content: '您确定要退出登录吗？',
+      success: function(res) {
+        if (res.confirm) {
+          that.$post({
+            url: service.get_wxzhjb,
+            data: {
+              tkID: that.tkID
+            }
+          }, {
+            success: ({
+              code,
+              data
+            }) => {
+              wepy.clearStorageSync()
+              that.$parent.$updateGlobalData('tkID', '')
+              that.$parent.getUserInfo(function(tkID) {
+                if (tkID) {
+                  self.tkID = tkID
+                }
+                self.$apply()
+                self.getItemList()
+              })
+            },
+            fail: ({
+              code,
+              data
+            }) => {}
+          })
+        } else if (res.cancel) {
+          console.log('用户点击取消')
+        }
+      }
+    })
+  }
+}
+</script>
+
+<style lang="css">
+.user {
+  padding-top: 30rpx
+}
+.weui-media-box__thumb {
+  width: 160rpx;
+  height: 160rpx;
+  margin-right: 20rpx;
+}
+.weui-media-box__desc {
+  margin-top: 10rpx;
+}
+.icon image {
+  width: 50rpx;
+  height: 50rpx;
+  margin-right: 10rpx;
+  vertical-align: middle;
+}
+.edit {
+  position: absolute;
+  top: 30rpx;
+  right: 30rpx;
+  width: 100rpx;
+  height: 100rpx;
+  text-align: right;
+}
+.edit image {
+  width: 40rpx;
+  height: 40rpx;
+}
+</style>

@@ -1,0 +1,169 @@
+<template>
+<view class="page__bd">
+<block wx:if="{{checkType}}">
+  <view class="weui-cells weui-cells_after-title">
+    <radio-group class="radio-group" bindchange="radioChange">
+      <view class="weui-cell weui-check__label" wx:for="{{itemData}}" wx:key="id">
+        <radio value="{{item.id+','+item.name}}" checked="{{item.checked}}" />
+        <view class="weui-cell__bd">{{item.name}}</view>
+        <navigator url="./checked-list?type={{checkType}}&id={{item.id}}&nextSearch={{item.nextSearch}}" hover-class="weui-cell_active" wx:if="{{item.nextSearch == 0}}">
+          <view class="weui-cell__ft weui-cell__ft_in-access"></view>
+        </navigator>
+      </view>
+    </radio-group>
+  </view>
+</block>
+<block wx:else>
+  <view class="content">
+    <view class="weui-cells weui-cells_after-title">
+      <view class="weui-cell weui-check__label" wx:for="{{itemData}}" wx:key="id" animation='{{item.wrapAnimation}}'>
+        <view class="weui-cell__hd">{{item.name}}</view>
+        <view class="weui-cell__bd">{{item.roleName}}</view>
+        <view class="weui-cell__ft" bindtap='deleteMsgItem' id='{{item.id}}'>
+          <image class="delete" src='/images/icons/delete.png'></image>
+        </view>
+      </view>
+    </view>
+    <view class="buttom">
+      <button class="weui-btn" type="primary" bindtap="determineUser" hover-class="other-button-hover"> 确定 </button>
+    </view>
+  </view>
+</block>
+</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import {
+  service
+} from '../../config.js'
+import base from '../../mixins/base'
+import http from '../../mixins/http'
+import events from '../../utils/event'
+
+export default class ContactList extends wepy.page {
+  mixins = [base, http]
+  config = {
+    navigationBarTitleText: '选择用户'
+  }
+  data = {
+    itemData: [],
+    tkID: '',
+    id: '00',
+    nextSearch: 0,
+    checkType: null,
+    username: ''
+  }
+  methods = {
+    radioChange(e) {
+      const radioChoose = e.detail.value.split(',')
+      events.emitEvents('getChooseData', radioChoose[0], radioChoose[1])
+      const checkListDepth = this.$parent.globalData.checkListDepth;
+      this.$parent.$updateGlobalData("checkListDepth", 0);
+      wepy.navigateBack({
+        delta: checkListDepth
+      });
+      console.log('checkListDepth:' + checkListDepth);
+      
+    },
+    deleteMsgItem(e) {
+      const index = this.getItemIndex(e.currentTarget.id, this.itemData)
+      let animation = wepy.createAnimation({
+        duration: 200
+      })
+      animation.height(0).opacity(0).step()
+
+      this.itemData[index].wrapAnimation = animation.export()
+      this.$apply()
+
+      setTimeout(function() {
+        this.itemData.splice(index, 1)
+        this.$apply()
+      }.bind(this), 200)
+    },
+    determineUser() {
+      let arr = this.itemData
+      let idArr = []
+      let nameArr = []
+      for (let i in arr) {
+        idArr.push(arr[i].id)
+        nameArr.push(arr[i].name)
+      }
+      const userNameS = nameArr.splice(0, 2)
+      events.emitEvents('getChooseContent', idArr, userNameS)
+      wepy.navigateBack()
+    }
+  }
+  getList(url, data) {
+    this.$post({
+      url: url,
+      data: data
+    }, {
+      success: ({
+        code,
+        data
+      }) => {
+        this.itemData = data.dataRows
+        this.$apply()
+      },
+      complete: () => {
+        this.loading = false
+      }
+    })
+  }
+  onLoad(options) {
+    this.$parent.$updateGlobalData(
+      "checkListDepth",
+      this.$parent.globalData.checkListDepth + 1
+    );
+      console.log('checkListDepth:' + this.$parent.globalData.checkListDepth);
+    this.tkID = this.$parent.globalData.tkID
+    this.id = options.id || '00'
+    this.nextSearch = options.nextSearch || 0
+    this.checkType = options.type
+    this.username = options.username
+    this.userIDS = options.userIDS
+
+    if (this.checkType === 'dept') {
+      this.getList(service.get_list_UserAddressList, {
+        tkID: this.tkID,
+        id: this.id,
+        nextSearch: this.nextSearch,
+        username: this.username
+      })
+    } else if (this.checkType === 'role') {
+      this.getList(service.get_list_SystemRoleList, {
+        tkID: this.tkID
+      })
+    } else {
+      this.getList(service.get_list_UserForDeptRole, {
+        tkID: this.tkID,
+        userIDS: this.userIDS
+      })
+    }
+  }
+}
+</script>
+
+<style lang="css">
+.weui-cell {
+  padding: 0 30rpx;
+  height: 44px;
+}
+.weui-cell__hd {
+  margin-right: 40rpx;
+}
+.delete {
+  width: 30rpx;
+  height: 30rpx;
+}
+.content {
+  padding-bottom: 90rpx;
+}
+.buttom {
+  width: 100%;
+  position: fixed;
+  left: 0;
+  bottom: 0;
+}
+</style>

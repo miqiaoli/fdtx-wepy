@@ -1,0 +1,85 @@
+<template>
+  <view class="page__bd bg__white">
+    <view class="weui-cells weui-cells_after-title">
+      <block wx:for="{{itemData}}" wx:key="id">
+        <radio-group wx:if="{{item.existsNextNode == 0}}" class="radio-group" bindchange="radioChange">
+          <label class="weui-cell weui-check__label">
+            <radio value="{{item.id+','+item.name}}" checked="{{item.checked}}" />
+            <view class="weui-cell__bd">{{item.name}}</view>
+          </label>
+        </radio-group>
+        <navigator wx:else url="./op-type-list?id={{item.id}}" class="weui-cell weui-cell_access" hover-class="weui-cell_active">
+          <view class="weui-cell__bd">{{item.name}}</view>
+          <view class="weui-cell__ft weui-cell__ft_in-access"></view>
+        </navigator>
+      </block>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from "wepy";
+import { service } from "../../config.js";
+import base from "../../mixins/base";
+import http from "../../mixins/http";
+import events from "../../utils/event";
+
+export default class OpTypeList extends wepy.page {
+  mixins = [base, http];
+  config = {
+    navigationBarTitleText: "代维日志作业类型"
+  };
+  data = {
+    tkID: "",
+    siteID: "",
+    itemData: []
+  };
+  methods = {
+    radioChange(e) {
+      const radioChoose = e.detail.value.split(",");
+      events.emitEvents("getChooseOpType", radioChoose[0], radioChoose[1]);
+      const OpTypeDepth = this.$parent.globalData.OpTypeDepth;
+      this.$parent.$updateGlobalData("OpTypeDepth", 0);
+      wepy.navigateBack({
+        delta: OpTypeDepth
+      });
+    }
+  };
+  getList() {
+    this.$post(
+      {
+        url: service.get_list_MaintenanceOpTypeList,
+        data: {
+          tkID: this.tkID,
+          opTypeID: this.siteID
+        }
+      },
+      {
+        success: ({ code, data }) => {
+          this.itemData = data.dataRows;
+          this.$apply();
+        }
+      }
+    );
+  }
+  // 监听返回按钮
+  onUnload (){
+    this.$parent.$updateGlobalData(
+      "OpTypeDepth",
+       this.$parent.globalData.OpTypeDepth - 1
+    );
+  }
+  onLoad(options) {
+    this.tkID = this.$parent.globalData.tkID;
+    this.$parent.$updateGlobalData(
+      "OpTypeDepth",
+       this.$parent.globalData.OpTypeDepth + 1
+    );
+    this.siteID = options.id;
+    this.getList();
+  }
+}
+</script>
+
+<style lang="css">
+</style>

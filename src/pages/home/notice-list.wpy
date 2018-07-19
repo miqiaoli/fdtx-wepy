@@ -1,0 +1,163 @@
+<template>
+<view class="page__bd bg__white">
+  <view class="weui-flex flex-align-center bg__search">
+    <view class="color-blue searchbar-text">
+      <view class='all-read' bindtap='bindChange' data-id='0' wx:if='{{isAll}}'>所有通知</view>
+      <view class='all-read' bindtap='bindChange' data-id='1' wx:else>未读通知</view>
+    </view>
+    <view class="weui-flex__item">
+      <SearchBar :placeholder="placeholder" @childFn.user="parentSearch"></SearchBar>
+    </view>
+  </view>
+  <block wx:if="{{list.length > 0}}">
+    <view class="weui-panel weui-panel-no-margin weui-panel_access bg__white">
+      <view class="weui-media-box weui-media-box_appmsg" wx:for="{{list}}" wx:key="id">
+        <view class="weui-media-box__hd weui-media-box__hd_in-appmsg">
+          <image class='weui-media-box__thumb' wx:if="{{item.isTZ}}" src="/images/icons/icon-gg.png"></image>
+          <image class='weui-media-box__thumb' wx:else src="/images/icons/icon-fk.png"></image>
+        </view>
+        <view class="weui-media-box__hd">
+          <text wx:if="{{item.isRead == 0}}" class="icon"></text>
+        </view>
+        <view class="weui-media-box__bd weui-media-box__bd_in-appmsg">
+          <navigator url="/pages/other/iframe?url={{item.itemUrl}}" hover-class="weui-cell_active">
+            <view class="weui-media-box__title">{{item.title}}</view>
+          </navigator>
+          <view class="weui-media-box__info">
+            <!-- <navigator url="/pages/contacts/details?id={{item.senderID}}" hover-class="weui-cell_active"> -->
+              <view class="weui-media-box__info__meta color-blue">{{item.senderName}}</view>
+            <!-- </navigator> -->
+            <view class="weui-media-box__info__meta {{item.senderName ? 'weui-media-box__info__meta_extra' : ''}}">{{item.editTime}}</view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </block>
+  <ListStates :loading.sync="loading" :noMore.sync="noMore" :noList.sync="noList"></ListStates>
+  <Tabbar></Tabbar>
+</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import {
+  service
+} from '../../config.js'
+import base from '../../mixins/base'
+import http from '../../mixins/http'
+import ListStates from '../../components/listStates'
+import SearchBar from '../../components/searchbar'
+import Tabbar from '../../components/tabbar'
+
+export default class NoticeList extends wepy.page {
+  mixins = [base, http]
+  config = {
+    navigationBarTitleText: '我的通知',
+    enablePullDownRefresh: true,
+    onReachBottomDistance: 100
+  }
+  data = {
+    tkID: '',
+    list: [],
+    noList: false,
+    noMore: false,
+    loading: true,
+    start: 1,
+    limit: 15,
+    isAll: 0,
+    placeholder: '搜索',
+    title: ''
+  }
+  components = {
+    ListStates,
+    SearchBar,
+    Tabbar
+  }
+  methods = {
+    bindChange(e) {
+      this.start = 1
+      this.isAll = parseInt(e.currentTarget.dataset.id)
+      this.noMoreList = false
+      this.getList()
+      this.$apply()
+    },
+    parentSearch(title, evt) {
+      this.title = title
+      this.getList()
+    }
+  }
+  getList() {
+    if (this.start === 1) {
+      this.list = []
+    }
+    this.$post({
+      url: service.get_list_Info,
+      data: {
+        tkID: this.tkID,
+        cruPage: this.start,
+        pageSize: this.limit,
+        isAll: this.isAll,
+        title: this.title
+      }
+    }, {
+      success: ({
+        code,
+        data
+      }) => {
+        if (data.dataRows.length === 0) {
+          this.noList = true
+        }
+        if (this.start === 1) {
+          this.list = data.dataRows
+          this.maxPage = Math.ceil(data.maxPage / this.limit)
+        } else {
+          this.list = [
+            ...this.list,
+            ...data.dataRows
+          ]
+        }
+        this.$apply()
+      },
+      complete: () => {
+        this.loading = false
+      }
+    })
+  }
+  onLoad() {
+    this.tkID = this.$parent.globalData.tkID
+    this.getList()
+  }
+  onPullDownRefresh() {
+    this.start = 1
+    this.getList()
+    wepy.stopPullDownRefresh()
+  }
+  onReachBottom() {
+    if (this.start < this.maxPage) {
+      ++this.start
+      this.getList()
+    } else {
+      this.noMore = true
+    }
+    this.$apply()
+  }
+}
+</script>
+
+<style lang="css">
+.weui-media-box__hd_in-appmsg {
+  width:90rpx;
+  height:90rpx;
+  margin-right: 26rpx;
+}
+.weui-media-box__hd {
+  align-self: flex-start;
+}
+.icon {
+  width: 24rpx;
+  height: 24rpx;
+  border-radius: 50%;
+  background-color: #09f;
+  margin-right: 10rpx;
+}
+</style>

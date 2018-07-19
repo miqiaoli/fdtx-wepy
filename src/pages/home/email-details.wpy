@@ -1,0 +1,139 @@
+<template>
+<view class="page__bd">
+  <view class="weui-cells__title" wx:if="{{itemData.fileList}}">基本内容</view>
+  <view class="weui-cells weui-cells_after-title">
+    <view class="weui-cell">
+      <view class="weui-cell__hd">发件人：</view>
+      <view class="weui-cell__bd">{{itemData.SenderName}}</view>
+    </view>
+    <view class="weui-cell">
+      <view class="weui-cell__hd">发送日期：</view>
+      <view class="weui-cell__bd">{{itemData.SendDate}}</view>
+    </view>
+    <view class="weui-cell">
+      <view class="weui-cell__hd">收件日期：</view>
+      <view class="weui-cell__bd">{{itemData.ReceiveDate}}</view>
+    </view>
+    <view class="weui-cell">
+      <view class="weui-cell__hd">主题：</view>
+      <view class="weui-cell__bd">{{itemData.Title}}</view>
+    </view>
+    <view class="weui-cell">
+      <view class="weui-cell__hd">正文内容：</view>
+      <view class="weui-cell__bd">{{itemData.Content}}</view>
+    </view>
+  </view>
+  <view class="weui-cells__title" wx:if="{{itemData.fileList}}">电子附件</view>
+  <view class="weui-cells weui-cells_after-title" wx:for="{{itemData.fileList}}" wx:for-index="index" wx:key="id">
+    <view class="weui-cell">
+      <view class="weui-cell__bd" data-id="{{item.fileID}}" bindtap="openfile">{{item.fileName}}</view>
+    </view>
+  </view>
+  <view class="weui-cells__title" wx:if="{{itemData.MailContentReceiverList_main}}">主送人收件情况</view>
+  <view class="weui-cells weui-cells_after-title">
+    <view class="weui-cell" wx:for="{{itemData.MailContentReceiverList_main}}" wx:for-index="index" wx:key="id">
+      <view class="weui-cell__bd">{{item.ReceiverName}}</view>
+      <view class="weui-cell__ft" wx:if="{{item.isReceive == 1}}">于{{item.receiveTime}} 签收</view>
+      <view class="weui-cell__ft" wx:else>未签收</view>
+    </view>
+  </view>
+</view>
+<view class="weui-cells__title" wx:if="{{itemData.MailContentReceiverList_copy}}">抄收人收件情况</view>
+<view class="weui-cells weui-cells_after-title">
+  <view class="weui-cell" wx:for="{{itemData.MailContentReceiverList_copy}}" wx:for-index="index" wx:key="id">
+    <view class="weui-cell__bd">{{item.ReceiverName}}</view>
+    <view class="weui-cell__ft" wx:if="{{item.isReceive == 1}}">于{{item.receiveTime}} 签收</view>
+    <view class="weui-cell__ft" wx:else>未签收</view>
+  </view>
+</view>
+</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import {
+  service
+} from '../../config.js'
+import base from '../../mixins/base'
+import http from '../../mixins/http'
+
+export default class EmailDetails extends wepy.page {
+  mixins = [base, http]
+  config = {
+    navigationBarTitleText: '我的邮箱'
+  }
+  data = {
+    tkID: '',
+    mailReceiveID: '',
+    mailID: '',
+    itemData: {}
+  }
+  methods = {
+    openfile(e) {
+      wepy.showLoading({
+        title: '加载中'
+      })
+      this.$post({
+        url: service.get_view_file,
+        data: {
+          tkID: this.tkID,
+          id: e.currentTarget.dataset.id
+        }
+      }, {
+        success: ({
+          code,
+          data
+        }) => {
+          wepy.downloadFile({
+            url: service.host + '/' + data.itemUrl,
+            success: function(res) {
+              var filePath = res.tempFilePath
+              setTimeout(() => wepy.openDocument({
+                filePath: filePath,
+                success: function(res) {
+                  wepy.hideLoading()
+                  console.log('打开文档成功')
+                  console.log(res)
+                }
+              }), 1000)
+            },
+            complete: function() {
+              wepy.hideLoading()
+            }
+          })
+        }
+      })
+    }
+  }
+  getItems() {
+    this.$post({
+      url: service.get_details_mail,
+      data: {
+        tkID: this.tkID,
+        mailReceiveID: this.mailReceiveID,
+        mailID: this.mailID
+      }
+    }, {
+      success: ({
+        code,
+        data
+      }) => {
+        this.itemData = data
+        this.$apply()
+      }
+    })
+  }
+  onLoad(options) {
+    this.tkID = this.$parent.globalData.tkID
+    this.mailReceiveID = options.mailReceiveID
+    this.mailID = options.mailID
+    this.getItems()
+  }
+}
+</script>
+
+<style lang="css">
+.weui-cell__hd {
+  align-self: flex-start;
+}
+</style>

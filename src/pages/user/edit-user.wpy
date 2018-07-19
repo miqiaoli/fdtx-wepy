@@ -1,0 +1,152 @@
+<template>
+<view class="page__bd">
+  <form bindsubmit="formSubmit" bindreset="formReset">
+    <view class="weui-cells weui-cells_after-title">
+      <view class="weui-cell weui-cell_input">
+        <view class="weui-cell__hd">
+          <view class="weui-label">原登录密码：</view>
+        </view>
+        <view class="weui-cell__bd">
+          <input password class="weui-input" name="pwd" value='{{pwd}}' placeholder='必填，用来验证' />
+        </view>
+      </view>
+      <view class="weui-cell weui-cell_input">
+        <view class="weui-cell__hd">
+          <view class="weui-label">手机号码：</view>
+        </view>
+        <view class="weui-cell__bd">
+          <input class="weui-input" name="mobile" value='{{mobile}}' placeholder='手机号码' />
+        </view>
+      </view>
+      <view class="weui-cell weui-cell_input">
+        <view class="weui-cell__hd">
+          <view class="weui-label">外部邮箱：</view>
+        </view>
+        <view class="weui-cell__bd">
+          <input class="weui-input" name="email" value='{{email}}' placeholder='外部邮箱' />
+        </view>
+      </view>
+      <view class="weui-cell weui-cell_input">
+        <view class="weui-cell__hd">
+          <view class="weui-label">固定电话：</view>
+        </view>
+        <view class="weui-cell__bd">
+          <input class="weui-input" name="telephone" value='{{telephone}}' placeholder='固定电话' />
+        </view>
+      </view>
+      <view class="weui-cell weui-cell_input">
+        <view class="weui-cell__hd">
+          <view class="weui-label">新登录密码：</view>
+        </view>
+        <view class="weui-cell__bd">
+          <input password class="weui-input" name="newPwd" value='{{newPwd}}' bindblur='newPwdInput' placeholder='如需修改请输入，否则留空' />
+        </view>
+      </view>
+      <view class="weui-cell weui-cell_input">
+        <view class="weui-cell__hd">
+          <view class="weui-label">确认密码：</view>
+        </view>
+        <view class="weui-cell__bd">
+          <input password class="weui-input" name="checkPwd" bindblur='checkPassword' value='{{checkPwd}}' placeholder='请确认密码' />
+        </view>
+      </view>
+    </view>
+    <view class="button page__bd_spacing">
+      <button class="weui-btn" type="primary" formType="submit">确定</button>
+      <button class="weui-btn" type="default" formType="reset">重置</button>
+    </view>
+  </form>
+</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import {
+  service
+} from '../../config.js'
+import base from '../../mixins/base'
+import http from '../../mixins/http'
+
+export default class Login extends wepy.page {
+  mixins = [base, http]
+  config = {
+    navigationBarTitleText: '修改用户信息'
+  }
+  data = {
+    tkID: '',
+    pwd: '',
+    mobile: '',
+    telephone: '',
+    email: '',
+    newPwd: '',
+    checkPwd: ''
+  }
+  methods = {
+    formSubmit(e) {
+      if (!this.getString(e.detail.value.pwd)) {
+        this.$alert('温馨提示', '请先确认原始密码')
+        return
+      }
+      if (e.detail.value.checkPwd !== e.detail.value.newPwd) {
+        this.checkPwd = ''
+        this.$alert('温馨提示', '两次密码输入不相同')
+        return
+      }
+      const data = Object.assign({
+        tkID: this.tkID
+      }, e.detail.value)
+      this.$post({
+        url: service.get_update_UserInfo,
+        data: data
+      }, {
+        success: ({
+          code,
+          data
+        }) => {
+          wepy.showToast({
+            title: '操作成功',
+            icon: 'success',
+            duration: 1000
+          })
+          this.$parent.$updateGlobalData('userInfo.mobile', e.detail.value.mobile)
+          this.$parent.$updateGlobalData('userInfo.email', e.detail.value.email)
+          this.$parent.$updateGlobalData('userInfo.telephone', e.detail.value.telephone)
+          wepy.setStorageSync('userInfo', this.$parent.userInfo)
+          setTimeout(function() {
+            wepy.redirectTo({
+              url: '/pages/mine'
+            })
+          }, 1000)
+        },
+        fail: ({
+          code,
+          data
+        }) => {}
+      })
+    },
+    formReset() {
+      this.tkID = this.$parent.globalData.tkID
+      this.mobile = this.$parent.globalData.userInfo.mobile
+      this.email = this.$parent.globalData.userInfo.email
+      this.telephone = this.$parent.globalData.userInfo.telephone
+      this.newPwd = ''
+      this.checkPwd = ''
+      this.pwd = ''
+      this.$apply()
+    }
+  }
+  onLoad() {
+    this.tkID = this.$parent.globalData.tkID
+    this.mobile = this.$parent.globalData.userInfo.mobile
+    this.email = this.$parent.globalData.userInfo.email
+    this.telephone = this.$parent.globalData.userInfo.telephone
+    this.$apply()
+  }
+}
+</script>
+
+<style lang="css">
+.button {
+  margin-top: 30rpx;
+}
+</style>

@@ -1,0 +1,25 @@
+<template>
+<view class="page__bd bg__white">暂无报表
+</view>
+<Tabbar></Tabbar>
+</template>
+
+<script>
+import wepy from 'wepy'
+import Tabbar from '../../components/tabbar'
+
+export default class ChartItems extends wepy.page {
+  config = {
+    navigationBarTitleText: '我的报表'
+  }
+  data = {}
+  components = {
+    Tabbar
+  }
+
+  onLoad() {}
+}
+</script>
+
+<style lang="css">
+</style>

@@ -1,0 +1,150 @@
+<template>
+  <view class="main-register">
+    <view class="weui-cells weui-cells_after-title text-center">
+      <image src="../../images/logo.png" class="logo"></image>
+      <text class="logo-title">方大通信项目管理系统</text>
+    </view>
+    <form bindsubmit="formSubmit" bindreset="formReset">
+      <view class="weui-cells main-address">
+        <view class="weui-cell weui-cell_input">
+          <view class="weui-cell__hd">
+            <view class="weui-label reset-label-left text-right">用户名</view>
+          </view>
+          <view class="weui-cell__bd h3">
+            <input class="weui-input" name="username" value="{{username}}" placeholder="用户名" />
+          </view>
+        </view>
+        <view class="weui-cell weui-cell_input">
+          <view class="weui-cell__hd">
+            <view class="weui-label reset-label-left text-right">密码</view>
+          </view>
+          <view class="weui-cell__bd h3">
+            <input class="weui-input" password name="password" value="{{password}}" placeholder="密码" />
+          </view>
+        </view>
+      </view>
+
+      <view class="weui-cells__tips">
+        <view class="color-666">说明</view>
+        <view class="color-999">首次登录请输入用户名密码绑定账号</view>
+        <view class="color-999">立即登录, 即可使用方大通信项目管理系统</view>
+      </view>
+
+      <button formType="submit" class="weui-btn btn-primary" type="primary">立即登录</button>
+    </form>
+  </view>
+</template>
+
+<script>
+import wepy from "wepy";
+import { service } from "../../config.js";
+import base from "../../mixins/base";
+import http from "../../mixins/http";
+
+export default class Login extends wepy.page {
+  mixins = [base, http];
+  config = {
+    navigationBarTitleText: "用户登录页"
+  };
+  data = {
+    tkID: ""
+  };
+  methods = {
+    formSubmit(e) {
+      if (!this.getString(e.detail.value.username)) {
+        this.$alert("温馨提示", "请输入用户名");
+        return;
+      }
+      if (!this.getString(e.detail.value.password)) {
+        this.$alert("温馨提示", "请输入密码");
+        return;
+      }
+      this.$post(
+        {
+          url: service.get_wxzhRegister,
+          data: {
+            tkID: this.tkID,
+            loginID: e.detail.value.username,
+            password: e.detail.value.password
+          }
+        },
+        {
+          success: ({ code, data }) => {
+            wepy.showToast({
+              title: "登录成功",
+              icon: "success",
+              duration: 1000
+            });
+            wepy.setStorageSync("tkID", data.tkID);
+            wepy.setStorageSync("userInfo", data.userInfo);
+            this.$parent.$updateGlobalData("tkID", data.tkID);
+            this.$parent.$updateGlobalData("userInfo", data.userInfo);
+            setTimeout(function() {
+              wepy.redirectTo({
+                url: "/pages/index"
+              });
+            }, 1000);
+          },
+          fail: ({ code, data }) => {}
+        }
+      );
+    }
+  };
+  onLoad(options) {
+    this.tkID = options.tkID;
+  }
+}
+</script>
+
+<style lang="less">
+@import "../../styles/custom/fn.less";
+.logo {
+  width: 120rpx;
+  height: 120rpx;
+  margin-top: 30rpx;
+  border-radius: 50%;
+}
+.logo-title {
+  display: block;
+  font-size: 24px;
+  font-weight: bold;
+  padding: 20rpx 20rpx 80rpx;
+}
+.main-register {
+  .weui-media-box__title {
+    padding-bottom: 0.5em;
+  }
+  .main-address {
+    margin-bottom: 1em;
+  }
+  .reset-cell-block {
+    display: block !important;
+    padding-bottom: 0;
+
+    & + .weui-cell {
+      &:before {
+        display: none;
+      }
+    }
+  }
+
+  .reset-label-left {
+    color: #999;
+    min-width: 3em;
+    margin-right: 1em;
+    padding-right: 1em;
+    border-right: 1rpx solid @uiBorderColor;
+  }
+
+  .reset-label-right {
+    color: #666;
+    line-height: 0;
+    margin-left: 1em;
+    padding-left: 1em;
+  }
+
+  .reset-input {
+    padding: 6px 15px;
+  }
+}
+</style>

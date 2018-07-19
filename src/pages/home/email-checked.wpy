@@ -1,0 +1,163 @@
+<template>
+<view class="page__bd">
+  <form bindsubmit="formSubmit">
+    <view class="weui-cells weui-cells_after-title">
+      <block wx:if="{{isTrans == 1}}">
+        <view class="weui-cell weui-cell_input">
+          <view class="weui-cell__hd">
+            <view class="weui-label">收件人：</view>
+          </view>
+          <view class="weui-cell__bd">
+            <view class="weui-input">{{SenderName_main}}<block wx:if="{{length_main>2}}">等用户</block></view>
+          </view>
+          <view class="weui-cell__ft" bindtap="addUser" data-type='1'>
+            <image class='ft-image__thumb' src="/images/icons/add.png"></image>
+          </view>
+        </view>
+        <view class="weui-cell weui-cell_input">
+          <view class="weui-cell__hd">
+            <view class="weui-label">抄收人：</view>
+          </view>
+          <view class="weui-cell__bd">
+            <view class="weui-input">{{SenderName_copy}}<block wx:if="{{length_copy>2}}">等用户</block></view>
+          </view>
+          <view class="weui-cell__ft" bindtap="addUser" data-type='0'>
+            <image class='ft-image__thumb' src="/images/icons/add.png"></image>
+          </view>
+        </view>
+      </block>
+      <view wx:else class="weui-cell weui-cell_input">
+        <view class="weui-cell__hd">
+          <view class="weui-label">收件人：</view>
+        </view>
+        <view class="weui-cell__bd">
+          <view class="weui-input">{{userName}}</view>
+        </view>
+      </view>
+      <view class="weui-cell weui-cell_input">
+        <view class="weui-cell__hd">
+          <view class="weui-label">主题：</view>
+        </view>
+        <view class="weui-cell__bd">
+          <view class="weui-input">{{title}}</view>
+        </view>
+      </view>
+    </view>
+    <view class="weui-cells__title">正文内容</view>
+    <view class="weui-cells weui-cells_after-title">
+      <view class="weui-cell">
+        <view class="weui-cell__bd">
+          <textarea class="weui-textarea" placeholder="请输入正文内容" style="height: 3.3em" />
+        </view>
+      </view>
+    </view>
+    <button class="weui-btn" type="primary" formType="submit">回复邮件</button>
+  </form>
+</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import {
+  service
+} from '../../config.js'
+import base from '../../mixins/base'
+import http from '../../mixins/http'
+import events from '../../utils/event'
+
+export default class EmailChecked extends wepy.page {
+  mixins = [base, http]
+  config = {
+    navigationBarTitleText: '我的邮箱'
+  }
+  data = {
+    tkID: '',
+    userID: '',
+    userName: '',
+    title: '',
+    isTrans: '',
+    mailID: '',
+    content: '',
+    sendUserIDS_main: '',
+    SenderName_main: '',
+    length_main: '',
+    sendUserIDS_copy: '',
+    SenderName_copy: '',
+    length_copy: '',
+    userType: ''
+  }
+  methods = {
+    addUser(e) {
+      this.userType = e.currentTarget.dataset.type === '1' ? 'main' : 'copy'
+      const IDS = 'sendUserIDS_' + [this.userType]
+      const NAMES = 'SenderName_' + [this.userType]
+      wepy.navigateTo({
+        url: '/pages/contacts/checked?contactIds=' + this[IDS] + '&contactNames=' + this[NAMES]
+      })
+    },
+    formSubmit(e) {
+      wepy.showLoading({
+        title: '上传中...'
+      })
+      this.$post({
+        url: service.get_send_Main,
+        data: {
+          tkID: this.tkID,
+          mailID: this.mailID,
+          userID: this.userID,
+          title: this.title,
+          isTrans: this.isTrans,
+          content: this.content,
+          sendUserIDS_main: this.sendUserIDS_main,
+          sendUserIDS_copy: this.sendUserIDS_copy
+        }
+      }, {
+        success: ({
+          code,
+          data
+        }) => {
+          wepy.showToast({
+            title: '成功！',
+            icon: 'success',
+            duration: 1000
+          })
+          setTimeout(function() {
+            wepy.redirectTo({
+              url: './email-list'
+            })
+          }, 1000)
+        }
+      })
+    }
+  }
+  getChooseUser(ids, names) {
+    const IDS = 'sendUserIDS_' + [this.userType]
+    const NAMES = 'SenderName_' + [this.userType]
+    const LENGTH = 'length_' + [this.userType]
+    this[IDS] = ids
+    this[NAMES] = names
+    this[LENGTH] = ids.split(',').filter(d => d).length
+  }
+  onLoad(options) {
+    this.tkID = this.$parent.globalData.tkID
+    this.userID = options.SenderID || this.SenderID
+    this.userName = options.senderName || this.senderName
+    this.title = options.title || this.title
+    this.isTrans = options.isTrans || this.isTrans
+    this.mailID = options.mailID || this.mailID
+    this.$apply()
+
+    events.addEvents('getChooseUser', this.getChooseUser, this)
+  }
+}
+</script>
+
+<style lang="css">
+.weui-btn {
+  margin-top: 40rpx;
+}
+.ft-image__thumb {
+    width: 44rpx;
+    height: 44rpx;
+}
+</style>

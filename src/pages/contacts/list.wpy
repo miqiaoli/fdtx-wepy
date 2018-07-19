@@ -1,0 +1,98 @@
+<template>
+<view class="page__bd bg__white">
+  <view class="weui-flex flex-align-center bg__search">
+    <view class="weui-flex__item">
+      <SearchBar :placeholder="placeholder" @childFn.user="parentSearch"></SearchBar>
+    </view>
+  </view>
+  <block wx:if="{{itemData.length > 0}}">
+    <view class="weui-cells weui-cells_after-title">
+      <block wx:for="{{itemData}}" wx:key="id">
+        <navigator wx:if="{{item.nextSearch}}" url="/pages/contacts/list?type={{checkType}}&id={{item.id}}&nextSearch={{item.nextSearch}}" hover-class="weui-cell_active">
+          <view class="weui-cell weui-check__label">
+            <view class="weui-cell__bd">{{item.name}}</view>
+            <view class="weui-cell__ft weui-cell__ft_in-access">{{item.usercount}}</view>
+          </view>
+        </navigator>
+        <navigator wx:else url="/pages/contacts/details?id={{item.id}}" hover-class="weui-cell_active">
+          <view class="weui-cell weui-check__label">
+            <view class="weui-cell__bd">{{item.name}}</view>
+            <view class="weui-cell__ft weui-cell__ft_in-access"></view>
+          </view>
+        </navigator>
+      </block>
+    </view>
+  </block>
+  <block wx:else>
+    <view class="loadmore-placeholder"></view>
+    <view class="weui-loadmore weui-loadmore_line">
+      <view class="weui-loadmore__tips weui-loadmore__tips_in-line">暂无信息</view>
+    </view>
+  </block>
+</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import {
+  service
+} from '../../config.js'
+import base from '../../mixins/base'
+import http from '../../mixins/http'
+import SearchBar from '../../components/searchbar'
+
+export default class Index extends wepy.page {
+  mixins = [base, http]
+  config = {
+    navigationBarTitleText: '通讯录'
+  }
+  data = {
+    tkID: '',
+    itemData: [],
+    placeholder: '搜索',
+    title: '',
+    id: '00',
+    nextSearch: 0
+  }
+  components = {
+    SearchBar
+  }
+  methods = {
+    parentSearch(title, evt) {
+      this.title = title
+      this.getList()
+    }
+  }
+  getList() {
+    this.$post({
+      url: service.get_list_UserAddressList,
+      data: {
+        tkID: this.tkID,
+        id: this.id,
+        nextSearch: this.nextSearch,
+        username: this.title
+      }
+    }, {
+      success: ({
+        code,
+        data
+      }) => {
+        this.itemData = data.dataRows
+        this.$apply()
+      },
+      complete: () => {
+        this.loading = false
+      }
+    })
+  }
+  onLoad(options) {
+    this.tkID = this.$parent.globalData.tkID
+    this.id = options.id || '00'
+    this.nextSearch = options.nextSearch || 0
+    this.getList()
+  }
+}
+</script>
+
+<style lang="css">
+</style>
