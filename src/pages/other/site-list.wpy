@@ -77,7 +77,7 @@ export default class SiteList extends wepy.page {
     },
     chooseSite(e) {
       const item = e.currentTarget.dataset.item
-      events.emitEvents('getChooseSite', item.siteID, item.siteName)
+      events.emitEvents('getChooseSite', item.siteID, item.siteName, item.latitude, item.longitude)
       wepy.navigateBack()
     }
   }

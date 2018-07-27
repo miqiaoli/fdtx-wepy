@@ -20,7 +20,9 @@
         </view>
         <view class="weui-cell weui-cell_input" wx:for="{{itemData.keyStrList}}" wx:key="id">
           <view class="weui-cell__hd">
-            <view class="weui-label">{{item.keyStr}}：</view>
+            <view class="weui-label">{{item.keyStr}}：
+              <text class="color-red">*</text>
+            </view>
           </view>
           <view class="weui-cell__bd">
             <input class="weui-input" name="keyStr{{index}}" type="number" placeholder="请输入" />
@@ -31,7 +33,9 @@
             <view class="weui-label">抄送人员：</view>
           </view>
           <view class="weui-cell__bd">
-            <view class="weui-input">{{infoUserNames}}<block wx:if="{{infoUserLength>2}}">等用户</block></view>
+            <view class="weui-input">{{infoUserNames}}
+              <block wx:if="{{infoUserLength>2}}">等用户</block>
+            </view>
           </view>
           <view class="weui-cell__ft" bindtap="addUser" data-type='1'>
             <image class='ft-image__thumb' src="/images/icons/add.png"></image>
@@ -161,6 +165,14 @@ export default class EmailChecked extends wepy.page {
       );
     },
     formSubmit(e) {
+      const length = this.itemData.keyStrList.length;
+      for (let i = 0; i < length; i++) {
+        let str = 'keyStr' + i
+        if (!e.detail.value[str]) {
+          this.$alert("温馨提示", "任务要点为必填");
+          return;
+        }
+      }
       wepy.showLoading({
         title: "上传中..."
       });
@@ -238,7 +250,7 @@ export default class EmailChecked extends wepy.page {
   getChooseUser(ids, names) {
     this.infoUserIDS = ids;
     this.infoUserNames = names;
-    this.infoUserLength = ids.split(',').filter(d => d).length
+    this.infoUserLength = ids.split(",").filter(d => d).length;
   }
   getItems() {
     this.$post(

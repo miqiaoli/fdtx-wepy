@@ -5,34 +5,45 @@
         <view class="weui-cell weui-cell_input">
           <block wx:if="{{inputSite}}">
             <view class="weui-cell__hd">
-              <view class="weui-label color-blue" @tap="changeSite">输入站点：</view>
+              <view class="weui-label" @tap="changeSite">
+                <text class="color-blue">选择站点：</text>
+                <text class="color-red">*</text>
+              </view>
+            </view>
+            <navigator class="weui-cell__bd" url="/pages/other/site-list" hover-class="navigator-hover">
+              <view class="weui-input" wx:if="{{siteName}}">{{siteName}}</view>
+              <view wx:else class="weui-input color-ccc">选择站点</view>
+            </navigator>
+            <view class="weui-cell__ft weui-cell__ft_in-access"></view>
+          </block>
+          <block wx:else>
+            <view class="weui-cell__hd">
+              <view class="weui-label" @tap="changeSite">
+                <text class="color-blue">输入站点：</text>
+                <text class="color-red">*</text>
+              </view>
             </view>
             <view class="weui-cell__bd">
               <input class="weui-input" name="siteName" value="{{siteName}}" placeholder="请输入站点名称" />
             </view>
           </block>
-          <block wx:else>
-            <view class="weui-cell__hd">
-              <view class="weui-label color-blue" @tap="changeSite">选择站点：</view>
-            </view>
-            <navigator class="weui-cell__bd" url="/pages/other/site-list" hover-class="navigator-hover">
-              <view wx:if="{{siteName}}" class="weui-input">{{siteName}}</view>
-              <view wx:else class="weui-input color-ccc">选择站点</view>
-            </navigator>
-            <view class="weui-cell__ft weui-cell__ft_in-access"></view>
-          </block>
         </view>
         <view class="weui-cell weui-cell_input">
           <view class="weui-cell__hd">
-            <view class="weui-label">站点位置：</view>
+            <view class="weui-label">站点位置：
+              <text class="color-red">*</text>
+            </view>
           </view>
           <view class="weui-cell__bd">
-            <view class="weui-input">{{longitude}},{{latitude}}</view>
+            <view class="weui-input" wx:if="{{inputSite}}">{{longitude}},{{latitude}}</view>
+            <input class="weui-input" wx:else name="siteLocation" value="{{longitude+','+latitude}}" placeholder="请输入站点位置" />
           </view>
         </view>
         <navigator class="weui-cell weui-cell_input" url="/pages/other/op-type-list?id={{siteID}}" hover-class="navigator-hover">
           <view class="weui-cell__hd">
-            <view class="weui-label">日志小类：</view>
+            <view class="weui-label">日志类型：
+              <text class="color-red">*</text>
+            </view>
           </view>
           <view class="weui-cell__bd">
             <view class="weui-input">{{opType2Name}}</view>
@@ -52,7 +63,9 @@
             <view class="weui-label">参与人员：</view>
           </view>
           <view class="weui-cell__bd">
-            <view class="weui-input">{{userNames}}<block wx:if="{{userLength>2}}">等用户</block></view>
+            <view class="weui-input">{{userNames}}
+              <block wx:if="{{userLength>2}}">等用户</block>
+            </view>
           </view>
           <view class="weui-cell__ft" bindtap="addUser" data-type='0'>
             <image class='ft-image__thumb' src="/images/icons/add.png"></image>
@@ -71,14 +84,18 @@
             <view class="weui-label">抄送人员：</view>
           </view>
           <view class="weui-cell__bd">
-            <view class="weui-input">{{infoUserNames}}<block wx:if="{{infoUserLength>2}}">等用户</block></view>
+            <view class="weui-input">{{infoUserNames}}
+              <block wx:if="{{infoUserLength>2}}">等用户</block>
+            </view>
           </view>
           <view class="weui-cell__ft" bindtap="addUser" data-type='1'>
             <image class='ft-image__thumb' src="/images/icons/add.png"></image>
           </view>
         </view>
       </view>
-      <view class="weui-cells__title">日志内容</view>
+      <view class="weui-cells__title">日志内容
+        <text class="color-red">*</text>
+      </view>
       <view class="weui-cells weui-cells_after-title">
         <view class="weui-cell">
           <view class="weui-cell__bd">
@@ -164,7 +181,7 @@ export default class NewLogs extends wepy.page {
   methods = {
     changeSite() {
       this.inputSite = !this.inputSite;
-      this.siteName = ''
+      this.siteName = "";
       this.$apply();
     },
     addUser(e) {
@@ -226,6 +243,18 @@ export default class NewLogs extends wepy.page {
       );
     },
     formSubmit(e) {
+      if (!this.inputSite && !e.detail.value.siteLocation) {
+        this.$alert("温馨提示", "请先输入站点位置");
+        return;
+      }
+      if (!this.opType2Name) {
+        this.$alert("温馨提示", "请先选择日志类型");
+        return;
+      }
+      if (!e.detail.value.opOtherContent) {
+        this.$alert("温馨提示", "请先输入日志内容");
+        return;
+      }
       wepy.showLoading({
         title: "上传中..."
       });
@@ -303,12 +332,14 @@ export default class NewLogs extends wepy.page {
     const LENGTH = [this.userType] + "Length";
     this[IDS] = ids;
     this[NAMES] = names;
-    this[LENGTH] = ids.split(',').filter(d => d).length
+    this[LENGTH] = ids.split(",").filter(d => d).length;
     this.$apply();
   }
-  getChooseSite(ids, names) {
+  getChooseSite(ids, names, lat, lon) {
     this.siteID = ids;
     this.siteName = names;
+    this.longitude = lon;
+    this.latitude = lat;
     this.$apply();
   }
   getChooseCar(ids, names) {
@@ -336,6 +367,8 @@ export default class NewLogs extends wepy.page {
           this.id = data.id;
           this.taskType = data.taskType;
           this.signID = data.signID;
+          this.longitude = data.longitude;
+          this.latitude = data.latitude;
           this.siteName = data.siteName;
           this.siteID = data.siteID;
           this.jyID = data.jyID;
@@ -375,19 +408,21 @@ export default class NewLogs extends wepy.page {
   }
   onLoad(options) {
     const that = this;
-    this.taskType = options.taskType || this.taskType;
-    this.id = options.id || this.id;
-    this.$getLocation(function(location) {
-      that.longitude = location.longitude;
-      that.latitude = location.latitude;
-      that.$apply();
-    });
-    this.imgHost = service.host;
     this.tkID = this.$parent.globalData.tkID;
-    this.getItems();
+    this.taskType = options.taskType || this.taskType;
+    this.imgHost = service.host;
     if (this.taskType === "2") {
+      this.id = options.id || this.id;
       this.getItemsTransfer();
+    } else {
+      this.$getLocation(function(location) {
+        that.longitude = location.longitude;
+        that.latitude = location.latitude;
+        that.$apply();
+      });
+      this.getItems();
     }
+
     events.addEvents("getChooseUser", this.getChooseUser, this);
     events.addEvents("getChooseSite", this.getChooseSite, this);
     events.addEvents("getChooseCar", this.getChooseCar, this);

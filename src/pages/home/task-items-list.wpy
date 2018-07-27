@@ -17,8 +17,9 @@
           <cover-view  hidden="{{hidden}}" class="layer" bindtap="removeLayer"></cover-view>
           <cover-view hidden="{{hidden}}" class="weui-dialog">
             <block wx:if="{{taskType == 0}}">
-                <cover-view class="weui-dialog__hd">
-                  <cover-view class="weui-dialog__title">任务详情</cover-view>
+                <cover-view class="weui-dialog__hd weui-flex">
+                  <cover-view class="weui-dialog__title weui-flex__item">任务详情</cover-view>
+                  <cover-image class="img" src="/images/tabbars/delete.png"  @tap="removeLayer" />
                 </cover-view>
                 <cover-view class="weui-dialog__bd">
                   <cover-view class="weui-dialog__text">任务类型：{{markerItem.name}}</cover-view>
@@ -27,13 +28,14 @@
                   <cover-view class="weui-dialog__text">要求日期：{{markerItem.planFinishDate}}</cover-view>
                 </cover-view>
                 <cover-view class="weui-dialog__ft weui-flex">
-                  <cover-view class="weui-flex__item mini-btn" type="primary" size="mini" data-id="{{markerItem.id}}" data-type="0" @tap="dealWith">处理</cover-view>
-                  <cover-view class="weui-flex__item mini-btn" type="warn" size="mini" @tap="removeLayer">取消</cover-view>
+                  <cover-view class="weui-flex__item mini-btn" data-id="{{markerItem.id}}" data-type="0" @tap="dealWith">处理</cover-view>
+                  <cover-view class="weui-flex__item mini-btn" @tap="removeLayer">取消</cover-view>
                 </cover-view>
             </block>
             <block wx:else>
-                <cover-view class="weui-dialog__hd">
-                  <cover-view class="weui-dialog__title">标记详情</cover-view>
+                <cover-view class="weui-dialog__hd weui-flex">
+                  <cover-view class="weui-dialog__title weui-flex__item">任务处理</cover-view>
+                  <cover-image class="img" src="/images/tabbars/delete.png"  @tap="removeLayer" />
                 </cover-view>
                 <cover-view class="weui-dialog__bd">
                   <cover-view class="weui-dialog__text">站点名称：{{markerItem.siteName }}</cover-view>
@@ -42,9 +44,9 @@
                   <cover-view class="weui-dialog__text">标记内容：{{markerItem.name}}</cover-view>
                 </cover-view>
                 <cover-view class="weui-dialog__ft weui-flex">
-                  <cover-view class="weui-flex__item mini-btn" type="primary" size="mini" data-id="{{markerItem.id}}" @tap="dealWith" data-type="2">转成日志</cover-view>
-                  <cover-view class="weui-flex__item mini-btn" type="default" size="mini" data-id="{{markerItem.id}}" @tap="shareMark">分享</cover-view>
-                  <cover-view class="weui-flex__item mini-btn" type="warn" size="mini" data-id="{{markerItem.id}}" @tap="deleteMark">删除</cover-view>
+                  <cover-view class="weui-flex__item mini-btn" data-id="{{markerItem.id}}" @tap="dealWith" data-type="2">转成日志</cover-view>
+                  <cover-view class="weui-flex__item mini-btn" data-id="{{markerItem.id}}" @tap="shareMark">分享</cover-view>
+                  <cover-view class="weui-flex__item mini-btn" data-id="{{markerItem.id}}" @tap="deleteMark">删除</cover-view>
                 </cover-view>
             </block>
           </cover-view>
@@ -354,7 +356,7 @@ export default class TaskItemsList extends wepy.page {
       that.mapCtx = wepy.createMapContext("map", that)
       setTimeout(function() {
         that.getRegion();
-      }, 1000);
+      }, 200);
       that.$apply();
     });
     this.mapCtx = wepy.createMapContext("map", this);
@@ -413,7 +415,7 @@ export default class TaskItemsList extends wepy.page {
   z-index: 11;
 }
 .weui-dialog__hd {
-  padding: 1.3em 1.6em 0.5em;
+  padding: 1em 1.6em 0.5em;
 }
 .weui-dialog__title {
   font-weight: 400;
@@ -442,5 +444,9 @@ export default class TaskItemsList extends wepy.page {
 }
 .mini-btn:first-child {
   border-left: none;
+}
+.img {
+  width: 40rpx;
+  height: 40rpx;
 }
 </style>

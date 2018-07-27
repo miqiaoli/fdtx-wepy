@@ -35,7 +35,8 @@
             </view>
           </view>
           <view class="weui-cell__bd">
-            <view class="weui-input">{{longitude}},{{latitude}}</view>
+            <view class="weui-input" wx:if="{{inputSite}}">{{longitude}},{{latitude}}</view>
+            <input class="weui-input" wx:else name="siteLocation" value="{{longitude+','+latitude}}" placeholder="请输入站点位置" />
           </view>
         </view>
         <navigator class="weui-cell weui-cell_input" url="/pages/other/op-type-list?id={{siteID}}" hover-class="navigator-hover">
@@ -243,6 +244,10 @@ export default class NewTask extends wepy.page {
         this.$alert("温馨提示", "请先选择站点");
         return;
       }
+      if(!this.inputSite && !e.detail.value.siteLocation) {
+        this.$alert("温馨提示", "请先输入站点位置");
+        return;
+      }
       if (!e.detail.value.name) {
         this.$alert("温馨提示", "请先输入任务类型");
         return;
@@ -334,9 +339,11 @@ export default class NewTask extends wepy.page {
     this.infoUserNames = names;
     this.infoUserLength = ids.split(",").filter(d => d).length;
   }
-  getChooseSite(ids, names) {
+  getChooseSite(ids, names, lat, lon) {
     this.siteID = ids;
     this.siteName = names;
+    this.longitude = lon;
+    this.latitude = lat;
     this.$apply();
   }
   getItems() {

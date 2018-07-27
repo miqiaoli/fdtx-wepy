@@ -4,12 +4,12 @@
       <view class="weui-cells weui-cells_after-title">
         <view class="weui-cell weui-cell_input">
           <view class="weui-cell__hd">
-            <view class="weui-label">标记类型：
+            <view class="weui-label">标记概要：
               <text class="color-red">*</text>
             </view>
           </view>
           <view class="weui-cell__bd">
-            <input class="weui-input" name="name" placeholder="请输入标记类型" />
+            <input class="weui-input" name="name" placeholder="请输入标记概要" />
           </view>
         </view>
         <view class="weui-cell weui-cell_input">
@@ -24,6 +24,7 @@
               <view class="weui-input" wx:if="{{siteName}}">{{siteName}}</view>
               <view wx:else class="weui-input color-ccc">选择站点</view>
             </navigator>
+          <view class="weui-cell__ft weui-cell__ft_in-access"></view>
           </block>
           <block wx:else>
             <view class="weui-cell__hd">
@@ -36,7 +37,6 @@
               <input class="weui-input" name="siteName" value="{{siteName}}" placeholder="请输入站点名称" />
             </view>
           </block>
-          <view class="weui-cell__ft weui-cell__ft_in-access"></view>
         </view>
         <view class="weui-cell weui-cell_input">
           <view class="weui-cell__hd">
@@ -45,7 +45,8 @@
             </view>
           </view>
           <view class="weui-cell__bd">
-            <view class="weui-input">{{longitude}},{{latitude}}</view>
+            <view class="weui-input" wx:if="{{inputSite}}">{{longitude}},{{latitude}}</view>
+            <input class="weui-input" wx:else name="siteLocation" value="{{longitude+','+latitude}}" placeholder="请输入站点位置" />
           </view>
         </view>
         <view class="weui-cell weui-cell_input">
@@ -202,6 +203,10 @@ export default class NewMark extends wepy.page {
         this.$alert("温馨提示", "请先选择站点");
         return;
       }
+      if(!this.inputSite && !e.detail.value.siteLocation) {
+        this.$alert("温馨提示", "请先输入站点位置");
+        return;
+      }
       if (!e.detail.value.opOtherContent) {
         this.$alert("温馨提示", "请先输入标记内容");
         return;
@@ -209,7 +214,6 @@ export default class NewMark extends wepy.page {
       wepy.showLoading({
         title: "上传中..."
       });
-
       this.$post(
         {
           url: service.get_commit_MaintenanceTask,
@@ -278,9 +282,11 @@ export default class NewMark extends wepy.page {
     this.infoUserNames = names;
     this.infoUserLength = ids.split(',').filter(d => d).length
   }
-  getChooseSite(ids, names) {
+  getChooseSite(ids, names, lat, lon) {
     this.siteID = ids;
     this.siteName = names;
+    this.longitude = lon;
+    this.latitude = lat;
     this.$apply();
   }
   getItems() {

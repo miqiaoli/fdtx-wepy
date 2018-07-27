@@ -50,6 +50,7 @@ export const service = {
     get_view_MaintenanceSite: `${host}/app/viewMaintenanceSite.do?method=viewMaintenanceSite`,
     get_commit_MaintenanceSite: `${host}/app/commitMaintenanceSite.do?method=commitMaintenanceSite`,
     get_commit_MaintenanceCarOpLog: `${host}/app/commitMaintenanceCarOpLog.do?method=commitMaintenanceCarOpLog`,
+    get_list_Car: `${host}/app/listCar.do?method=listCar`,
     get_share_Sign: `${host}/app/shareSign.do?method=shareSign`,
     get_new_MaintenanceTask: `${host}/app/newMaintenanceTask.do?method=newMaintenanceTask`,
     // 主域
